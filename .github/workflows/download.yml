@@ -23,8 +23,6 @@ jobs:
 
     - name: Fetch latest data
       run: |
-        ls -l
-        cd euroml
         python daily_load.py
     - name: Commit and push if it changed
       run: |-
