@@ -8,6 +8,7 @@ LICENSE file in the root directory of this source tree.
 import argparse
 import json
 import os
+import os.path
 import logging
 
 logging.basicConfig(level=logging.INFO)
@@ -55,6 +56,14 @@ def save_to_jsonl(out_file_name, data_out):
     with open(out_file_name, "w") as f:
         json.dump(data_out, f)
 
+def rdata_json(filepath):
+    if os.path.exists(filepath):
+        with open(filepath, "r") as f:
+            return json.load(f) # Pass the file object here
+    else:
+        return {}
+
+
 
 # Create a session object that can store cookies
 session = requests.Session()
@@ -84,8 +93,15 @@ for result_row in items_acord:
     text = span.get_text()
     datedr = text.split(",")[1].strip()
     draml = extract_balls(drawdiv)
+    dict_eml[datedr] = draml
 
-    print("Date:{0} --> {1}".format(datedr, draml ))
+    #print("Date:{0} --> {1}".format(datedr, draml ))
 
-
+print(dict_eml)
+logging.info("Loading json eml data... at: {}".format("./dataset/{}_eml.json".format(yr_count)))
+dryr_data = rdata_json("./dataset/{}_eml.json".format(yr_count))
+print(dryr_data)
+for k,v in dict_eml.items():
+    if k in dryr_data:
+        logging.info("Data not found: --> add {0}:{1}".format(k,v))
 

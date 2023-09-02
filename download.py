@@ -14,7 +14,7 @@ logging.basicConfig(level=logging.INFO)
 
 # eml_url = "https://www.win2day.at/lotterie/euromillionen"
 euarch_url = "https://www.euro-millions.com/de-at/{}-zahlen-archiv"
-yr_count = 2023
+yr_count = 2009
 
 eml_url = euarch_url.format(yr_count)
 file_name = "{}_eml.json".format(yr_count)
@@ -36,7 +36,7 @@ from bs4 import BeautifulSoup
 
 def extract_balls(dac):
     # Find all the <li> elements with the class "resultBall" or "lucky-star"
-    balls_raw = data.find_all("li", class_=["resultBall", "lucky-star"])
+    balls_raw = dac.find_all("li", class_=["resultBall", "lucky-star"])
     lucky_stars = []
     balls = []
 
@@ -87,7 +87,7 @@ dict_eml = {}
 # Print the content of each result_row element
 for result_row in result_rows:
     data = result_row.find("ul", {"class": "balls"})
-    dr_date = result_row.get("title").split(",")[1]
+    dr_date = result_row.get("title").split(",")[1].strip()
     drw_lst = extract_balls(data)
     dict_eml[dr_date] = drw_lst
     #print("Date:{0} --> {1}".format(dr_date, drw_lst ))
