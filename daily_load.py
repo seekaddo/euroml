@@ -98,10 +98,13 @@ for result_row in items_acord:
     #print("Date:{0} --> {1}".format(datedr, draml ))
 
 print(dict_eml)
-logging.info("Loading json eml data... at: {}".format("./dataset/{}_eml.json".format(yr_count)))
-dryr_data = rdata_json("./dataset/{}_eml.json".format(yr_count))
-print(dryr_data)
-for k,v in dict_eml.items():
-    if k in dryr_data:
-        logging.info("Data not found: --> add {0}:{1}".format(k,v))
+file_name = "./dataset/{}_eml.json".format(yr_count)
+logging.info("Loading json eml data... at: {}".format(file_name))
+dryr_data = rdata_json(file_name)
+#print(dryr_data)
 
+for k,v in dict_eml.items():
+    if k not in dryr_data:
+        logging.info("Data not found: --> add {0}:{1}".format(k,v))
+        dryr_data[k] = v
+save_to_jsonl(file_name, dryr_data)
