@@ -7,6 +7,8 @@ LICENSE file in the root directory of this source tree.
 
 import argparse
 import json
+import csv
+from datetime import datetime
 import os
 import os.path
 import logging
@@ -25,7 +27,6 @@ from bs4 import BeautifulSoup
 
 
 def extract_balls(dac):
-
     balls_raw = dac.find_all("span", class_=["ball", "star"])
     lucky_stars = []
     balls = []
@@ -55,6 +56,23 @@ def rdata_json(filepath):
         return {}
 
 
+def dumpto_csv(out_file, data):
+    # Create a csv object using the open() function and the csv.writer() method
+    with open(out_file, mode='w', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerows(data)
+
+
+def load_csv(filn):
+    data = []
+    # Read the data from the CSV file
+    with open(filn, mode='r') as file:
+        reader = csv.reader(file)
+        for row in reader:
+            data.append(row)
+    return data
+
+
 session = requests.Session()
 response = session.get(eml_url)
 
@@ -62,7 +80,6 @@ data = session.get(eml_url, cookies=response.cookies)
 
 soup = BeautifulSoup(data.text, "html.parser")
 items_acord = soup.find("div", {"class": "accordion"})
-
 
 items_acord = items_acord.find_all("div", {"class": "accordion-item"})
 
@@ -86,9 +103,27 @@ file_name = "./dataset/{}_eml.json".format(yr_count)
 logging.info("Loading json eml data... at: {}".format(file_name))
 dryr_data = rdata_json(file_name)
 # print(dryr_data)
+temp_data = {}
 
 for k, v in dict_eml.items():
     if k not in dryr_data:
-        logging.info("Data not found: --> add {0}:{1}".format(k, v))
+        logging.info("New Data  found: --> add {0}:{1}".format(k, v))
         dryr_data[k] = v
+        temp_data[k] = v
 save_to_jsonl(file_name, dryr_data)
+
+filenamecsv = "./dataset/test_data.csv"
+if temp_data:
+    csvdic = load_csv(filenamecsv)
+    for k, v in temp_data.items():
+        row = [k, str(v[0]), str(v[1])]
+        csvdic.append(row)
+    # Sort the data by date
+    sorted_data = sorted(csvdic[1:], key=lambda x: datetime.strptime(x[0], "%d.%m.%Y"))
+    sorted_data.insert(0, csvdic[0])  # Reinsert the header row
+
+    logging.info(" Updating the testdata: {}".format(filenamecsv))
+    dumpto_csv(filenamecsv, sorted_data)
+
+else:
+    logging.info("No new data found to dump to the csv file: {}".format(filenamecsv))
