@@ -43,7 +43,8 @@ def resolve_refresh_window(dataset_dir: Path, start_year: int | None, end_year: 
 
     resolved_start = start_year
     if resolved_start is None:
-        resolved_start = min(max(existing_years), current_year) if existing_years else current_year
+        # Daily refreshes should update the latest local archive year and the current year.
+        resolved_start = max(existing_years) if existing_years else current_year
 
     resolved_end = end_year if end_year is not None else current_year
     if resolved_start > resolved_end:
@@ -100,12 +101,12 @@ def write_csv(path: Path, rows: list[list[str]]) -> None:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Refresh the latest yearly EuroMillions JSON archives and rebuild test_data.csv.",
+        description="Cron-style updater for the latest EuroMillions yearly archives.",
     )
     parser.add_argument(
         "--start-year",
         type=int,
-        help="First year to refresh. Defaults to the last locally available year.",
+        help="First year to refresh. Defaults to the latest locally available year.",
     )
     parser.add_argument(
         "--end-year",
@@ -130,6 +131,20 @@ def parse_args() -> argparse.Namespace:
         default=DEFAULT_TEST_CSV,
         help=f"Output CSV rebuilt from the refreshed yearly JSON files. Default: {DEFAULT_TEST_CSV}",
     )
+    csv_group = parser.add_mutually_exclusive_group()
+    csv_group.add_argument(
+        "--rebuild-test-csv",
+        dest="rebuild_test_csv",
+        action="store_true",
+        help="Rebuild test_data.csv after refreshing the yearly archives.",
+    )
+    csv_group.add_argument(
+        "--skip-test-csv",
+        dest="rebuild_test_csv",
+        action="store_false",
+        help="Refresh only the yearly JSON archives and leave test_data.csv unchanged.",
+    )
+    parser.set_defaults(rebuild_test_csv=True)
     return parser.parse_args()
 
 
@@ -143,6 +158,10 @@ def main() -> None:
 
     logging.info("Refreshing yearly archives from %s to %s", start_year, end_year)
     refresh_range(start_year, end_year, dataset_dir=args.dataset_dir)
+
+    if not args.rebuild_test_csv:
+        logging.info("Skipping test CSV rebuild by request")
+        return
 
     cutoff = latest_training_draw(args.train_csv)
     rows = build_test_rows(args.dataset_dir, cutoff)
