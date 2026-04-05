@@ -6,8 +6,8 @@
   "strategies": [
     "baseline",
     "star_guard1_soft_screen_multi_history",
-    "core_plus_guard_multi_history",
-    "core_plus_guard_baseline"
+    "star_focus_soft_guard_screen",
+    "star_focus_core_plus_guard"
   ],
   "results": [
     {
@@ -37,24 +37,24 @@
       "release_pass": false
     },
     {
-      "strategy": "core_plus_guard_multi_history",
+      "strategy": "star_focus_soft_guard_screen",
       "mode": "frozen",
-      "top1_w": 1.1111,
-      "best5_w": 2.4815,
-      "lift_best5": -0.2963,
-      "useful_rate": 0.0,
+      "top1_w": 1.1481,
+      "best5_w": 2.9259,
+      "lift_best5": 0.1481,
+      "useful_rate": 0.037,
       "2+2_rate": 0.0,
-      "3+1_count": 0,
+      "3+1_count": 1,
       "3+2_count": 0,
       "4+2_count": 0,
       "release_pass": false
     },
     {
-      "strategy": "core_plus_guard_baseline",
+      "strategy": "star_focus_core_plus_guard",
       "mode": "frozen",
-      "top1_w": 0.9259,
-      "best5_w": 2.963,
-      "lift_best5": 0.1852,
+      "top1_w": 1.1481,
+      "best5_w": 2.3333,
+      "lift_best5": -0.4444,
       "useful_rate": 0.0,
       "2+2_rate": 0.0,
       "3+1_count": 0,
@@ -434,210 +434,109 @@
         "engine_signature": "strategy-star-guard1-soft-screen-multi-history-v1:v2_weekday_regime:v2_overlap_penalty"
       }
     },
-    "core_plus_guard_multi_history": {
+    "star_focus_soft_guard_screen": {
       "summary": {
-        "strategy": "core_plus_guard_multi_history",
+        "strategy": "star_focus_soft_guard_screen",
         "mode": "frozen",
-        "top1_w": 1.1111,
-        "best5_w": 2.4815,
-        "lift_best5": -0.2963,
-        "useful_rate": 0.0,
+        "top1_w": 1.1481,
+        "best5_w": 2.9259,
+        "lift_best5": 0.1481,
+        "useful_rate": 0.037,
         "2+2_rate": 0.0,
-        "3+1_count": 0,
+        "3+1_count": 1,
         "3+2_count": 0,
         "4+2_count": 0,
         "release_pass": false
       },
-      "best5_events": [],
+      "best5_events": [
+        {
+          "draw_date": "2026-01-23",
+          "rank": 2,
+          "hit": "3+1",
+          "prediction": {
+            "main_numbers": [
+              5,
+              21,
+              29,
+              42,
+              48
+            ],
+            "star_numbers": [
+              3,
+              9
+            ]
+          },
+          "actual": {
+            "main_numbers": [
+              4,
+              5,
+              13,
+              21,
+              42
+            ],
+            "star_numbers": [
+              3,
+              10
+            ]
+          }
+        }
+      ],
       "top1_events": [],
       "confidence_calibration": {
         "bin_count": 10,
         "observation_count": 135,
         "bins": [
           {
-            "score_min": -16.680352,
-            "score_max": -16.536929,
+            "score_min": -16.402547,
+            "score_max": -16.280399,
             "count": 14,
-            "avg_weighted_hits": 1.0714285714285714,
-            "avg_main_hits": 0.35714285714285715,
-            "avg_star_hits": 0.35714285714285715,
-            "hit_any_rate": 0.7142857142857143,
-            "hit_two_plus_rate": 0.35714285714285715,
-            "hit_four_plus_rate": 0.0,
+            "avg_weighted_hits": 1.3571428571428572,
+            "avg_main_hits": 0.9285714285714286,
+            "avg_star_hits": 0.21428571428571427,
+            "hit_any_rate": 0.7857142857142857,
+            "hit_two_plus_rate": 0.2857142857142857,
+            "hit_four_plus_rate": 0.14285714285714285,
             "confidence": 6
           },
           {
-            "score_min": -16.536929,
-            "score_max": -16.464392999999998,
+            "score_min": -16.280399,
+            "score_max": -16.201884399999997,
             "count": 13,
-            "avg_weighted_hits": 1.5384615384615385,
-            "avg_main_hits": 0.7692307692307693,
-            "avg_star_hits": 0.38461538461538464,
+            "avg_weighted_hits": 0.9230769230769231,
+            "avg_main_hits": 0.6153846153846154,
+            "avg_star_hits": 0.15384615384615385,
             "hit_any_rate": 0.6923076923076923,
-            "hit_two_plus_rate": 0.5384615384615384,
-            "hit_four_plus_rate": 0.07692307692307693,
-            "confidence": 10
+            "hit_two_plus_rate": 0.23076923076923078,
+            "hit_four_plus_rate": 0.0,
+            "confidence": 2
           },
           {
-            "score_min": -16.464392999999998,
-            "score_max": -16.4169936,
+            "score_min": -16.201884399999997,
+            "score_max": -16.1350102,
             "count": 14,
-            "avg_weighted_hits": 0.8571428571428571,
-            "avg_main_hits": 0.42857142857142855,
-            "avg_star_hits": 0.21428571428571427,
-            "hit_any_rate": 0.5,
+            "avg_weighted_hits": 1.0,
+            "avg_main_hits": 0.2857142857142857,
+            "avg_star_hits": 0.35714285714285715,
+            "hit_any_rate": 0.5714285714285714,
             "hit_two_plus_rate": 0.35714285714285715,
             "hit_four_plus_rate": 0.0,
-            "confidence": 4
+            "confidence": 3
           },
           {
-            "score_min": -16.4169936,
-            "score_max": -16.373911800000002,
+            "score_min": -16.1350102,
+            "score_max": -16.0842228,
             "count": 13,
             "avg_weighted_hits": 0.8461538461538461,
             "avg_main_hits": 0.38461538461538464,
             "avg_star_hits": 0.23076923076923078,
-            "hit_any_rate": 0.46153846153846156,
-            "hit_two_plus_rate": 0.3076923076923077,
-            "hit_four_plus_rate": 0.0,
-            "confidence": 4
+            "hit_any_rate": 0.38461538461538464,
+            "hit_two_plus_rate": 0.23076923076923078,
+            "hit_four_plus_rate": 0.07692307692307693,
+            "confidence": 2
           },
           {
-            "score_min": -16.373911800000002,
-            "score_max": -16.339685,
-            "count": 13,
-            "avg_weighted_hits": 1.1538461538461537,
-            "avg_main_hits": 0.6923076923076923,
-            "avg_star_hits": 0.23076923076923078,
-            "hit_any_rate": 0.6923076923076923,
-            "hit_two_plus_rate": 0.3076923076923077,
-            "hit_four_plus_rate": 0.0,
-            "confidence": 6
-          },
-          {
-            "score_min": -16.339685,
-            "score_max": -16.3012158,
-            "count": 14,
-            "avg_weighted_hits": 1.0,
-            "avg_main_hits": 0.5714285714285714,
-            "avg_star_hits": 0.21428571428571427,
-            "hit_any_rate": 0.6428571428571429,
-            "hit_two_plus_rate": 0.2857142857142857,
-            "hit_four_plus_rate": 0.0,
-            "confidence": 5
-          },
-          {
-            "score_min": -16.3012158,
-            "score_max": -16.2439696,
-            "count": 13,
-            "avg_weighted_hits": 1.1538461538461537,
-            "avg_main_hits": 0.5384615384615384,
-            "avg_star_hits": 0.3076923076923077,
-            "hit_any_rate": 0.6153846153846154,
-            "hit_two_plus_rate": 0.38461538461538464,
-            "hit_four_plus_rate": 0.0,
-            "confidence": 6
-          },
-          {
-            "score_min": -16.2439696,
-            "score_max": -15.913066599999999,
-            "count": 14,
-            "avg_weighted_hits": 0.5,
-            "avg_main_hits": 0.21428571428571427,
-            "avg_star_hits": 0.14285714285714285,
-            "hit_any_rate": 0.2857142857142857,
-            "hit_two_plus_rate": 0.14285714285714285,
-            "hit_four_plus_rate": 0.0,
-            "confidence": 1
-          },
-          {
-            "score_min": -15.913066599999999,
-            "score_max": -15.019549199999998,
-            "count": 13,
-            "avg_weighted_hits": 1.0769230769230769,
-            "avg_main_hits": 0.3076923076923077,
-            "avg_star_hits": 0.38461538461538464,
-            "hit_any_rate": 0.5384615384615384,
-            "hit_two_plus_rate": 0.38461538461538464,
-            "hit_four_plus_rate": 0.0,
-            "confidence": 6
-          },
-          {
-            "score_min": -15.019549199999998,
-            "score_max": -14.597472,
-            "count": 14,
-            "avg_weighted_hits": 1.1428571428571428,
-            "avg_main_hits": 0.2857142857142857,
-            "avg_star_hits": 0.42857142857142855,
-            "hit_any_rate": 0.5714285714285714,
-            "hit_two_plus_rate": 0.42857142857142855,
-            "hit_four_plus_rate": 0.0,
-            "confidence": 6
-          }
-        ],
-        "source_summary": {
-          "strategy": "core_plus_guard_multi_history",
-          "mode": "frozen",
-          "train_end": "2025-12-31",
-          "test_start": "2026-01-01",
-          "test_end": "2026-12-31",
-          "draw_count": 27,
-          "top1_avg_main_hits": 0.2963,
-          "top1_avg_star_hits": 0.4074,
-          "top1_avg_weighted_hits": 1.1111,
-          "best5_avg_main_hits": 1,
-          "best5_avg_star_hits": 0.7407,
-          "best5_avg_weighted_hits": 2.4815,
-          "random_top1_avg_main_hits": 0.4815,
-          "random_top1_avg_star_hits": 0.3333,
-          "random_top1_avg_weighted_hits": 1.1481,
-          "random_best5_avg_main_hits": 0.8519,
-          "random_best5_avg_star_hits": 0.963,
-          "random_best5_avg_weighted_hits": 2.7778,
-          "lift_top1_weighted_hits": -0.037,
-          "lift_best5_weighted_hits": -0.2963,
-          "top1_exact_5_2_hits": 0,
-          "best5_exact_5_2_hits": 0
-        },
-        "dataset_fingerprint": "aa485569312bcbe300635ef0667e9de66ff374ea505ec340a39f7b42493b8cdf",
-        "engine_signature": "strategy-core-plus-guard-multi-history-v1:v2_weekday_regime:v2_overlap_penalty"
-      }
-    },
-    "core_plus_guard_baseline": {
-      "summary": {
-        "strategy": "core_plus_guard_baseline",
-        "mode": "frozen",
-        "top1_w": 0.9259,
-        "best5_w": 2.963,
-        "lift_best5": 0.1852,
-        "useful_rate": 0.0,
-        "2+2_rate": 0.0,
-        "3+1_count": 0,
-        "3+2_count": 0,
-        "4+2_count": 0,
-        "release_pass": false
-      },
-      "best5_events": [],
-      "top1_events": [],
-      "confidence_calibration": {
-        "bin_count": 10,
-        "observation_count": 135,
-        "bins": [
-          {
-            "score_min": -16.699814,
-            "score_max": -16.581595,
-            "count": 14,
-            "avg_weighted_hits": 1.3571428571428572,
-            "avg_main_hits": 0.5,
-            "avg_star_hits": 0.42857142857142855,
-            "hit_any_rate": 0.6428571428571429,
-            "hit_two_plus_rate": 0.5,
-            "hit_four_plus_rate": 0.07142857142857142,
-            "confidence": 7
-          },
-          {
-            "score_min": -16.581595,
-            "score_max": -16.5219834,
+            "score_min": -16.0842228,
+            "score_max": -16.036141,
             "count": 13,
             "avg_weighted_hits": 0.7692307692307693,
             "avg_main_hits": 0.46153846153846156,
@@ -648,128 +547,261 @@
             "confidence": 1
           },
           {
-            "score_min": -16.5219834,
-            "score_max": -16.4699926,
+            "score_min": -16.036141,
+            "score_max": -15.9753198,
             "count": 14,
-            "avg_weighted_hits": 1.1428571428571428,
+            "avg_weighted_hits": 1.2857142857142858,
             "avg_main_hits": 0.42857142857142855,
-            "avg_star_hits": 0.35714285714285715,
-            "hit_any_rate": 0.5,
-            "hit_two_plus_rate": 0.35714285714285715,
+            "avg_star_hits": 0.42857142857142855,
+            "hit_any_rate": 0.7142857142857143,
+            "hit_two_plus_rate": 0.5,
             "hit_four_plus_rate": 0.0,
-            "confidence": 4
+            "confidence": 5
           },
           {
-            "score_min": -16.4699926,
-            "score_max": -16.437157799999998,
+            "score_min": -15.9753198,
+            "score_max": -15.843017,
+            "count": 13,
+            "avg_weighted_hits": 1.8461538461538463,
+            "avg_main_hits": 0.9230769230769231,
+            "avg_star_hits": 0.46153846153846156,
+            "hit_any_rate": 0.6923076923076923,
+            "hit_two_plus_rate": 0.46153846153846156,
+            "hit_four_plus_rate": 0.23076923076923078,
+            "confidence": 10
+          },
+          {
+            "score_min": -15.843017,
+            "score_max": -15.470373200000001,
+            "count": 14,
+            "avg_weighted_hits": 1.5714285714285714,
+            "avg_main_hits": 0.5714285714285714,
+            "avg_star_hits": 0.5,
+            "hit_any_rate": 0.7142857142857143,
+            "hit_two_plus_rate": 0.5,
+            "hit_four_plus_rate": 0.14285714285714285,
+            "confidence": 8
+          },
+          {
+            "score_min": -15.470373200000001,
+            "score_max": -15.0343882,
             "count": 13,
             "avg_weighted_hits": 1.0769230769230769,
             "avg_main_hits": 0.46153846153846156,
             "avg_star_hits": 0.3076923076923077,
-            "hit_any_rate": 0.6923076923076923,
-            "hit_two_plus_rate": 0.3076923076923077,
-            "hit_four_plus_rate": 0.0,
-            "confidence": 3
-          },
-          {
-            "score_min": -16.437157799999998,
-            "score_max": -16.413344,
-            "count": 13,
-            "avg_weighted_hits": 1.7692307692307692,
-            "avg_main_hits": 0.6923076923076923,
-            "avg_star_hits": 0.5384615384615384,
-            "hit_any_rate": 0.6923076923076923,
-            "hit_two_plus_rate": 0.5384615384615384,
-            "hit_four_plus_rate": 0.15384615384615385,
-            "confidence": 10
-          },
-          {
-            "score_min": -16.413344,
-            "score_max": -16.3802844,
-            "count": 14,
-            "avg_weighted_hits": 1.5714285714285714,
-            "avg_main_hits": 0.8571428571428571,
-            "avg_star_hits": 0.35714285714285715,
-            "hit_any_rate": 0.9285714285714286,
-            "hit_two_plus_rate": 0.42857142857142855,
-            "hit_four_plus_rate": 0.0,
-            "confidence": 7
-          },
-          {
-            "score_min": -16.3802844,
-            "score_max": -16.314666,
-            "count": 13,
-            "avg_weighted_hits": 1.4615384615384615,
-            "avg_main_hits": 0.6923076923076923,
-            "avg_star_hits": 0.38461538461538464,
-            "hit_any_rate": 0.6153846153846154,
+            "hit_any_rate": 0.46153846153846156,
             "hit_two_plus_rate": 0.38461538461538464,
             "hit_four_plus_rate": 0.07692307692307693,
-            "confidence": 7
+            "confidence": 4
           },
           {
-            "score_min": -16.314666,
-            "score_max": -15.837622,
+            "score_min": -15.0343882,
+            "score_max": -14.563363,
             "count": 14,
-            "avg_weighted_hits": 0.8571428571428571,
-            "avg_main_hits": 0.2857142857142857,
-            "avg_star_hits": 0.2857142857142857,
-            "hit_any_rate": 0.5,
-            "hit_two_plus_rate": 0.35714285714285715,
+            "avg_weighted_hits": 1.2142857142857142,
+            "avg_main_hits": 0.35714285714285715,
+            "avg_star_hits": 0.42857142857142855,
+            "hit_any_rate": 0.6428571428571429,
+            "hit_two_plus_rate": 0.42857142857142855,
             "hit_four_plus_rate": 0.0,
-            "confidence": 2
-          },
-          {
-            "score_min": -15.837622,
-            "score_max": -15.6130032,
-            "count": 13,
-            "avg_weighted_hits": 0.8461538461538461,
-            "avg_main_hits": 0.38461538461538464,
-            "avg_star_hits": 0.23076923076923078,
-            "hit_any_rate": 0.46153846153846156,
-            "hit_two_plus_rate": 0.3076923076923077,
-            "hit_four_plus_rate": 0.0,
-            "confidence": 2
-          },
-          {
-            "score_min": -15.6130032,
-            "score_max": -15.43216,
-            "count": 14,
-            "avg_weighted_hits": 1.0,
-            "avg_main_hits": 0.42857142857142855,
-            "avg_star_hits": 0.2857142857142857,
-            "hit_any_rate": 0.5,
-            "hit_two_plus_rate": 0.2857142857142857,
-            "hit_four_plus_rate": 0.07142857142857142,
-            "confidence": 3
+            "confidence": 4
           }
         ],
         "source_summary": {
-          "strategy": "core_plus_guard_baseline",
+          "strategy": "star_focus_soft_guard_screen",
           "mode": "frozen",
           "train_end": "2025-12-31",
           "test_start": "2026-01-01",
           "test_end": "2026-12-31",
           "draw_count": 27,
           "top1_avg_main_hits": 0.4074,
-          "top1_avg_star_hits": 0.2593,
-          "top1_avg_weighted_hits": 0.9259,
-          "best5_avg_main_hits": 1.037,
-          "best5_avg_star_hits": 0.963,
-          "best5_avg_weighted_hits": 2.963,
+          "top1_avg_star_hits": 0.3704,
+          "top1_avg_weighted_hits": 1.1481,
+          "best5_avg_main_hits": 1.1481,
+          "best5_avg_star_hits": 0.8889,
+          "best5_avg_weighted_hits": 2.9259,
           "random_top1_avg_main_hits": 0.4815,
           "random_top1_avg_star_hits": 0.3333,
           "random_top1_avg_weighted_hits": 1.1481,
           "random_best5_avg_main_hits": 0.8519,
           "random_best5_avg_star_hits": 0.963,
           "random_best5_avg_weighted_hits": 2.7778,
-          "lift_top1_weighted_hits": -0.2222,
-          "lift_best5_weighted_hits": 0.1852,
+          "lift_top1_weighted_hits": 0.0,
+          "lift_best5_weighted_hits": 0.1481,
           "top1_exact_5_2_hits": 0,
           "best5_exact_5_2_hits": 0
         },
         "dataset_fingerprint": "aa485569312bcbe300635ef0667e9de66ff374ea505ec340a39f7b42493b8cdf",
-        "engine_signature": "strategy-core-plus-guard-baseline-v1:v2_weekday_regime:v2_overlap_penalty"
+        "engine_signature": "strategy-star-focus-soft-guard-screen-v1:v2_weekday_regime:v2_overlap_penalty"
+      }
+    },
+    "star_focus_core_plus_guard": {
+      "summary": {
+        "strategy": "star_focus_core_plus_guard",
+        "mode": "frozen",
+        "top1_w": 1.1481,
+        "best5_w": 2.3333,
+        "lift_best5": -0.4444,
+        "useful_rate": 0.0,
+        "2+2_rate": 0.0,
+        "3+1_count": 0,
+        "3+2_count": 0,
+        "4+2_count": 0,
+        "release_pass": false
+      },
+      "best5_events": [],
+      "top1_events": [],
+      "confidence_calibration": {
+        "bin_count": 10,
+        "observation_count": 135,
+        "bins": [
+          {
+            "score_min": -16.577418,
+            "score_max": -16.4914636,
+            "count": 14,
+            "avg_weighted_hits": 0.9285714285714286,
+            "avg_main_hits": 0.5,
+            "avg_star_hits": 0.21428571428571427,
+            "hit_any_rate": 0.42857142857142855,
+            "hit_two_plus_rate": 0.21428571428571427,
+            "hit_four_plus_rate": 0.07142857142857142,
+            "confidence": 3
+          },
+          {
+            "score_min": -16.4914636,
+            "score_max": -16.432247999999998,
+            "count": 13,
+            "avg_weighted_hits": 1.1538461538461537,
+            "avg_main_hits": 0.6923076923076923,
+            "avg_star_hits": 0.23076923076923078,
+            "hit_any_rate": 0.8461538461538461,
+            "hit_two_plus_rate": 0.23076923076923078,
+            "hit_four_plus_rate": 0.0,
+            "confidence": 3
+          },
+          {
+            "score_min": -16.432247999999998,
+            "score_max": -16.360602399999998,
+            "count": 14,
+            "avg_weighted_hits": 1.3571428571428572,
+            "avg_main_hits": 0.6428571428571429,
+            "avg_star_hits": 0.35714285714285715,
+            "hit_any_rate": 0.6428571428571429,
+            "hit_two_plus_rate": 0.35714285714285715,
+            "hit_four_plus_rate": 0.07142857142857142,
+            "confidence": 6
+          },
+          {
+            "score_min": -16.360602399999998,
+            "score_max": -16.2881098,
+            "count": 13,
+            "avg_weighted_hits": 0.8461538461538461,
+            "avg_main_hits": 0.5384615384615384,
+            "avg_star_hits": 0.15384615384615385,
+            "hit_any_rate": 0.6923076923076923,
+            "hit_two_plus_rate": 0.15384615384615385,
+            "hit_four_plus_rate": 0.0,
+            "confidence": 1
+          },
+          {
+            "score_min": -16.2881098,
+            "score_max": -16.218751,
+            "count": 13,
+            "avg_weighted_hits": 1.3846153846153846,
+            "avg_main_hits": 0.6153846153846154,
+            "avg_star_hits": 0.38461538461538464,
+            "hit_any_rate": 0.7692307692307693,
+            "hit_two_plus_rate": 0.46153846153846156,
+            "hit_four_plus_rate": 0.0,
+            "confidence": 6
+          },
+          {
+            "score_min": -16.218751,
+            "score_max": -16.1431894,
+            "count": 14,
+            "avg_weighted_hits": 1.0714285714285714,
+            "avg_main_hits": 0.21428571428571427,
+            "avg_star_hits": 0.42857142857142855,
+            "hit_any_rate": 0.5714285714285714,
+            "hit_two_plus_rate": 0.35714285714285715,
+            "hit_four_plus_rate": 0.07142857142857142,
+            "confidence": 4
+          },
+          {
+            "score_min": -16.1431894,
+            "score_max": -16.0147622,
+            "count": 13,
+            "avg_weighted_hits": 1.6923076923076923,
+            "avg_main_hits": 0.46153846153846156,
+            "avg_star_hits": 0.6153846153846154,
+            "hit_any_rate": 0.8461538461538461,
+            "hit_two_plus_rate": 0.5384615384615384,
+            "hit_four_plus_rate": 0.15384615384615385,
+            "confidence": 10
+          },
+          {
+            "score_min": -16.0147622,
+            "score_max": -15.717500399999999,
+            "count": 14,
+            "avg_weighted_hits": 0.9285714285714286,
+            "avg_main_hits": 0.6428571428571429,
+            "avg_star_hits": 0.14285714285714285,
+            "hit_any_rate": 0.6428571428571429,
+            "hit_two_plus_rate": 0.2857142857142857,
+            "hit_four_plus_rate": 0.0,
+            "confidence": 2
+          },
+          {
+            "score_min": -15.717500399999999,
+            "score_max": -15.0343882,
+            "count": 13,
+            "avg_weighted_hits": 1.0769230769230769,
+            "avg_main_hits": 0.46153846153846156,
+            "avg_star_hits": 0.3076923076923077,
+            "hit_any_rate": 0.46153846153846156,
+            "hit_two_plus_rate": 0.38461538461538464,
+            "hit_four_plus_rate": 0.07692307692307693,
+            "confidence": 5
+          },
+          {
+            "score_min": -15.0343882,
+            "score_max": -14.563363,
+            "count": 14,
+            "avg_weighted_hits": 1.2142857142857142,
+            "avg_main_hits": 0.35714285714285715,
+            "avg_star_hits": 0.42857142857142855,
+            "hit_any_rate": 0.6428571428571429,
+            "hit_two_plus_rate": 0.42857142857142855,
+            "hit_four_plus_rate": 0.0,
+            "confidence": 5
+          }
+        ],
+        "source_summary": {
+          "strategy": "star_focus_core_plus_guard",
+          "mode": "frozen",
+          "train_end": "2025-12-31",
+          "test_start": "2026-01-01",
+          "test_end": "2026-12-31",
+          "draw_count": 27,
+          "top1_avg_main_hits": 0.4074,
+          "top1_avg_star_hits": 0.3704,
+          "top1_avg_weighted_hits": 1.1481,
+          "best5_avg_main_hits": 0.9259,
+          "best5_avg_star_hits": 0.7037,
+          "best5_avg_weighted_hits": 2.3333,
+          "random_top1_avg_main_hits": 0.4815,
+          "random_top1_avg_star_hits": 0.3333,
+          "random_top1_avg_weighted_hits": 1.1481,
+          "random_best5_avg_main_hits": 0.8519,
+          "random_best5_avg_star_hits": 0.963,
+          "random_best5_avg_weighted_hits": 2.7778,
+          "lift_top1_weighted_hits": 0.0,
+          "lift_best5_weighted_hits": -0.4444,
+          "top1_exact_5_2_hits": 0,
+          "best5_exact_5_2_hits": 0
+        },
+        "dataset_fingerprint": "aa485569312bcbe300635ef0667e9de66ff374ea505ec340a39f7b42493b8cdf",
+        "engine_signature": "strategy-star-focus-core-plus-guard-v1:v2_weekday_regime:v2_overlap_penalty"
       }
     }
   }

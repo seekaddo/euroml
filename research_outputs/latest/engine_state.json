@@ -191,7 +191,7 @@
       "observation_count": 520
     }
   },
-  "updated_at_utc": "2026-04-05T05:51:48.340708+00:00",
+  "updated_at_utc": "2026-04-05T06:04:17.106843+00:00",
   "prediction_strategy": "baseline",
   "confidence_calibration": {
     "bin_count": 10,
