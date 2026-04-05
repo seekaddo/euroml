@@ -8,7 +8,7 @@ export UV_CACHE_DIR="${UV_CACHE_DIR:-.uv-cache}"
 OUTPUT_DIR="${OUTPUT_DIR:-research_outputs/latest}"
 SAMPLES="${SAMPLES:-50}"
 PREDICTION_STRATEGY="${PREDICTION_STRATEGY:-baseline}"
-DEFAULT_STRATEGIES="baseline star_guard1_soft_screen_multi_history support_gated_star_guard_screen_050_multi_history support_gated_star_guard_screen_060_multi_history support_gated_star_guard_screen_050_baseline support_gated_star_guard_screen_060_baseline"
+DEFAULT_STRATEGIES="baseline star_guard1_soft_screen_multi_history adaptive_soft_star_guard_screen_multi_history adaptive_soft_star_guard_screen_baseline"
 
 if (($# > 0)); then
   STRATEGIES=("$@")

@@ -10,6 +10,7 @@ from engine.tickets import (
     generate_conditional_two_stage_tickets,
     generate_conditional_rerank_tickets,
     generate_hybrid_conditional_tickets,
+    generate_adaptive_soft_star_guard_screen_tickets,
     generate_soft_star_guard_screen_tickets,
     generate_soft_star_guard_rerank_tickets,
     generate_support_gated_star_guard_screen_050_tickets,
@@ -206,6 +207,22 @@ STRATEGIES: dict[str, StrategySpec] = {
         main_factory=_baseline_factory,
         star_factory=_baseline_factory,
         ticket_generator=generate_support_gated_star_guard_screen_060_tickets,
+    ),
+    "adaptive_soft_star_guard_screen_multi_history": StrategySpec(
+        name="adaptive_soft_star_guard_screen_multi_history",
+        description="Activate the softer star-guard screen only when exact star-pair evidence and pair separation are both strong enough.",
+        signature="strategy-adaptive-soft-star-guard-screen-multi-history-v1",
+        main_factory=_multi_history_factory,
+        star_factory=_multi_history_factory,
+        ticket_generator=generate_adaptive_soft_star_guard_screen_tickets,
+    ),
+    "adaptive_soft_star_guard_screen_baseline": StrategySpec(
+        name="adaptive_soft_star_guard_screen_baseline",
+        description="Baseline probability models with the adaptive soft star-guard screen.",
+        signature="strategy-adaptive-soft-star-guard-screen-baseline-v1",
+        main_factory=_baseline_factory,
+        star_factory=_baseline_factory,
+        ticket_generator=generate_adaptive_soft_star_guard_screen_tickets,
     ),
 }
 

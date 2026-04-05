@@ -26,6 +26,9 @@ EXPERIMENTAL_RERANK_POOL = 800
 STAR_GUARD_COUNT = 2
 SUPPORT_GATE_THRESHOLD_050 = 0.50
 SUPPORT_GATE_THRESHOLD_060 = 0.60
+ADAPTIVE_SUPPORT_THRESHOLD = 0.55
+ADAPTIVE_EXACT_SHARE_THRESHOLD = 0.24
+ADAPTIVE_SCORE_MARGIN_THRESHOLD = 0.10
 
 
 @dataclass(frozen=True)
@@ -931,6 +934,36 @@ def _guarded_star_support(
     return support
 
 
+def _guarded_star_metrics(
+    candidate_scores: dict[tuple[tuple[int, ...], tuple[int, ...]], float],
+    spec: GameSpec,
+    train_records: list[DrawRecord],
+    base_main_probabilities: dict[int, float],
+) -> tuple[float, float, float]:
+    guarded = _top_distinct_star_pair_candidates(candidate_scores, 2)
+    if not guarded:
+        return 0.0, 0.0, 0.0
+
+    (_, star_numbers), top_score = guarded[0]
+    second_score = guarded[1][1] if len(guarded) > 1 else top_score - 1.0
+    weighted_records = _conditional_star_record_weights(train_records, star_numbers, spec)
+    total_weight = sum(weight for _, weight, _ in weighted_records)
+    exact_weight = sum(weight for _, weight, overlap in weighted_records if overlap == spec.star_pick_count)
+    if total_weight <= 0.0:
+        return 0.0, 0.0, max(0.0, float(top_score - second_score))
+
+    _, _, support = _conditional_main_context_with_support(
+        records=train_records,
+        spec=spec,
+        star_numbers=star_numbers,
+        base_main_probabilities=base_main_probabilities,
+        global_main_pair_bonus=build_pair_bonus(train_records, "main", spec.main_pool_size),
+    )
+    exact_share = float(min(1.0, exact_weight / total_weight))
+    score_margin = float(max(0.0, top_score - second_score))
+    return support, exact_share, score_margin
+
+
 def generate_star_guard_rerank_tickets(
     main_probabilities: dict[int, float],
     star_probabilities: dict[int, float],
@@ -1202,6 +1235,53 @@ def _generate_support_gated_star_guard_screen_tickets(
         rerank_weight=0.30,
     )
     return _select_guarded_rerank_portfolio(guarded, reranked, top_k)
+
+
+def generate_adaptive_soft_star_guard_screen_tickets(
+    main_probabilities: dict[int, float],
+    star_probabilities: dict[int, float],
+    spec: GameSpec,
+    train_records: list[DrawRecord],
+    top_k: int = 5,
+    sample_count: int = 5000,
+    random_state: int = 7,
+) -> list[CandidateTicket]:
+    rerank_sample_count = _resolve_rerank_sample_count(sample_count, EXPERIMENTAL_RERANK_POOL)
+    global_scores = _build_global_candidate_scores(
+        main_probabilities=main_probabilities,
+        star_probabilities=star_probabilities,
+        spec=spec,
+        train_records=train_records,
+        sample_count=rerank_sample_count,
+        random_state=random_state,
+    )
+    if not global_scores:
+        return []
+
+    support, exact_share, score_margin = _guarded_star_metrics(
+        candidate_scores=global_scores,
+        spec=spec,
+        train_records=train_records,
+        base_main_probabilities=main_probabilities,
+    )
+    if (
+        support < ADAPTIVE_SUPPORT_THRESHOLD
+        or exact_share < ADAPTIVE_EXACT_SHARE_THRESHOLD
+        or score_margin < ADAPTIVE_SCORE_MARGIN_THRESHOLD
+    ):
+        ranked = sorted(global_scores.items(), key=lambda item: item[1], reverse=True)
+        return _select_ranked_candidates(ranked, top_k, _overlap_penalty)
+
+    return _generate_soft_star_guard_rerank_tickets(
+        main_probabilities=main_probabilities,
+        star_probabilities=star_probabilities,
+        spec=spec,
+        train_records=train_records,
+        top_k=top_k,
+        sample_count=sample_count,
+        random_state=random_state,
+        rerank_pool_size=EXPERIMENTAL_RERANK_POOL,
+    )
 
 
 def generate_support_gated_star_guard_screen_050_tickets(
