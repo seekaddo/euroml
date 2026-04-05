@@ -47,14 +47,6 @@ class DrawBacktestResult:
     predictions: list[dict[str, object]]
 
 
-def _train_rows(feature_table: pd.DataFrame, cutoff: date) -> pd.DataFrame:
-    return feature_table[feature_table["draw_ordinal"] <= cutoff.toordinal()]
-
-
-def _draw_rows(feature_table: pd.DataFrame, draw_date: date) -> pd.DataFrame:
-    return feature_table[feature_table["draw_ordinal"] == draw_date.toordinal()]
-
-
 def _pattern_counts(scores: list[dict[str, int]]) -> dict[str, int]:
     counts = {label: 0 for label, _, _ in MILESTONE_PATTERNS}
     for score in scores:
@@ -152,9 +144,7 @@ def run_backtest(
     if not test_records:
         raise ValueError("No test records were found for the requested backtest window")
 
-    frozen_main_model = None
-    frozen_star_model = None
-    frozen_train_records: list[DrawRecord] | None = None
+    frozen_context = None
     if config.mode == "frozen":
         frozen_train_records = [record for record in records if record.draw_date <= config.train_end]
         LOGGER.info(
@@ -163,11 +153,11 @@ def run_backtest(
             len(frozen_train_records),
             config.train_end.isoformat(),
         )
-        frozen_main_model = strategy.create_main_model(random_state=config.random_state).fit(
-            _train_rows(feature_tables["main"], config.train_end)
-        )
-        frozen_star_model = strategy.create_star_model(random_state=config.random_state).fit(
-            _train_rows(feature_tables["star"], config.train_end)
+        frozen_context = strategy.build_context(
+            records=records,
+            feature_tables=feature_tables,
+            train_cutoff=config.train_end,
+            random_state=config.random_state,
         )
 
     draw_results: list[DrawBacktestResult] = []
@@ -198,44 +188,22 @@ def run_backtest(
             )
         if config.mode == "rolling":
             train_cutoff = date.fromordinal(record.draw_date.toordinal() - 1)
-            train_records = [item for item in records if item.draw_date < record.draw_date]
             LOGGER.info("Retraining rolling models through %s", train_cutoff.isoformat())
-            main_model = strategy.create_main_model(random_state=config.random_state).fit(
-                _train_rows(feature_tables["main"], train_cutoff)
-            )
-            star_model = strategy.create_star_model(random_state=config.random_state).fit(
-                _train_rows(feature_tables["star"], train_cutoff)
+            context = strategy.build_context(
+                records=records,
+                feature_tables=feature_tables,
+                train_cutoff=train_cutoff,
+                random_state=config.random_state,
             )
         else:
-            train_records = frozen_train_records or []
-            main_model = frozen_main_model
-            star_model = frozen_star_model
+            context = frozen_context
 
-        assert main_model is not None
-        assert star_model is not None
+        assert context is not None
 
-        main_rows = _draw_rows(feature_tables["main"], record.draw_date)
-        star_rows = _draw_rows(feature_tables["star"], record.draw_date)
-        main_probabilities = dict(
-            zip(
-                main_rows["candidate"].astype(int),
-                main_model.predict_proba(main_rows),
-                strict=True,
-            )
-        )
-        star_probabilities = dict(
-            zip(
-                star_rows["candidate"].astype(int),
-                star_model.predict_proba(star_rows),
-                strict=True,
-            )
-        )
-
-        tickets = strategy.ticket_generator(
-            main_probabilities=main_probabilities,
-            star_probabilities=star_probabilities,
-            spec=record.spec,
-            train_records=train_records,
+        tickets = strategy.generate_tickets_from_context(
+            context=context,
+            feature_tables=feature_tables,
+            target_record=record,
             top_k=config.top_k,
             sample_count=config.sample_count,
             random_state=config.random_state + record.draw_id,
@@ -357,11 +325,8 @@ def run_backtest(
             for result in draw_results
         ],
     }
-    if config.mode == "frozen" and frozen_main_model is not None and frozen_star_model is not None:
-        report["model_diagnostics"] = {
-            "main": frozen_main_model.diagnostics,
-            "star": frozen_star_model.diagnostics,
-        }
+    if config.mode == "frozen" and frozen_context is not None:
+        report["model_diagnostics"] = strategy.diagnostics_from_context(frozen_context)
     return report
 
 
@@ -391,28 +356,16 @@ def predict_for_draw(
     sample_count: int = 5000,
     random_state: int = 7,
 ) -> list[CandidateTicket]:
-    train_records = [record for record in records if record.draw_date <= train_cutoff]
-    main_model = strategy.create_main_model(random_state=random_state).fit(
-        _train_rows(feature_tables["main"], train_cutoff)
+    context = strategy.build_context(
+        records=records,
+        feature_tables=feature_tables,
+        train_cutoff=train_cutoff,
+        random_state=random_state,
     )
-    star_model = strategy.create_star_model(random_state=random_state).fit(
-        _train_rows(feature_tables["star"], train_cutoff)
-    )
-
-    main_rows = _draw_rows(feature_tables["main"], target_record.draw_date)
-    star_rows = _draw_rows(feature_tables["star"], target_record.draw_date)
-    main_probabilities = dict(
-        zip(main_rows["candidate"].astype(int), main_model.predict_proba(main_rows), strict=True)
-    )
-    star_probabilities = dict(
-        zip(star_rows["candidate"].astype(int), star_model.predict_proba(star_rows), strict=True)
-    )
-
-    return strategy.ticket_generator(
-        main_probabilities=main_probabilities,
-        star_probabilities=star_probabilities,
-        spec=target_record.spec,
-        train_records=train_records,
+    return strategy.generate_tickets_from_context(
+        context=context,
+        feature_tables=feature_tables,
+        target_record=target_record,
         top_k=top_k,
         sample_count=sample_count,
         random_state=random_state + target_record.draw_id,

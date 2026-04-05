@@ -24,6 +24,7 @@ CONDITIONAL_RERANK_POOL = 2500
 CONDITIONAL_RERANK_WEIGHT = 0.42
 EXPERIMENTAL_RERANK_POOL = 800
 STAR_GUARD_COUNT = 2
+ENSEMBLE_RANK_POOL = 160
 SUPPORT_GATE_THRESHOLD_050 = 0.50
 SUPPORT_GATE_THRESHOLD_060 = 0.60
 ADAPTIVE_SUPPORT_THRESHOLD = 0.55
@@ -326,6 +327,37 @@ def _select_ranked_candidates(
 def _resolve_rerank_sample_count(sample_count: int, rerank_pool_size: int | None = None) -> int:
     pool_floor = CONDITIONAL_RERANK_POOL if rerank_pool_size is None else rerank_pool_size
     return max(sample_count, pool_floor)
+
+
+def _normalized_rank_map(
+    ranked_candidates: list[tuple[tuple[tuple[int, ...], tuple[int, ...]], float]],
+    pool_size: int,
+) -> dict[tuple[tuple[int, ...], tuple[int, ...]], float]:
+    limited = ranked_candidates[: max(1, pool_size)]
+    if not limited:
+        return {}
+    if len(limited) == 1:
+        return {limited[0][0]: 1.0}
+    return {
+        key: float(1.0 - index / (len(limited) - 1))
+        for index, (key, _) in enumerate(limited)
+    }
+
+
+def _normalized_value_map(
+    ranked_candidates: list[tuple[tuple[tuple[int, ...], tuple[int, ...]], float]],
+    pool_size: int,
+) -> dict[tuple[tuple[int, ...], tuple[int, ...]], float]:
+    limited = ranked_candidates[: max(1, pool_size)]
+    if not limited:
+        return {}
+    min_score = limited[-1][1]
+    max_score = limited[0][1]
+    span = max(max_score - min_score, 1e-9)
+    return {
+        key: float((score - min_score) / span)
+        for key, score in limited
+    }
 
 
 def _partial_main_combo_score(
@@ -1368,6 +1400,90 @@ def generate_core_plus_guard_tickets(
 
     final_portfolio = baseline_core + [chosen_guard]
     return final_portfolio[:top_k]
+
+
+def generate_selector_ensemble_tickets(
+    main_probabilities: dict[int, float],
+    star_probabilities: dict[int, float],
+    spec: GameSpec,
+    train_records: list[DrawRecord],
+    top_k: int = 5,
+    sample_count: int = 5000,
+    random_state: int = 7,
+) -> list[CandidateTicket]:
+    rerank_sample_count = _resolve_rerank_sample_count(sample_count, EXPERIMENTAL_RERANK_POOL)
+    global_scores = _build_global_candidate_scores(
+        main_probabilities=main_probabilities,
+        star_probabilities=star_probabilities,
+        spec=spec,
+        train_records=train_records,
+        sample_count=rerank_sample_count,
+        random_state=random_state,
+    )
+    if not global_scores:
+        return []
+
+    global_ranked = sorted(global_scores.items(), key=lambda item: item[1], reverse=True)
+    reranked = _build_conditional_reranked_candidates_from_global_scores(
+        global_scores=global_scores,
+        main_probabilities=main_probabilities,
+        spec=spec,
+        train_records=train_records,
+        rerank_weight=0.30,
+    )
+    guarded = _top_distinct_star_pair_candidates(global_scores, 1)
+    guard_bonus_by_key = {
+        key: 0.28 - 0.03 * index
+        for index, (key, _) in enumerate(guarded)
+    }
+    guarded_ranked = [
+        (key, float(score + guard_bonus_by_key.get(key, 0.0)))
+        for key, score in reranked
+    ]
+    guarded_ranked.sort(key=lambda item: item[1], reverse=True)
+
+    support, exact_share, score_margin = _guarded_star_metrics(
+        candidate_scores=global_scores,
+        spec=spec,
+        train_records=train_records,
+        base_main_probabilities=main_probabilities,
+    )
+    specialist_strength = min(1.0, 0.50 * support + 0.30 * exact_share + 0.20 * min(1.0, score_margin / 0.18))
+
+    selector_weights = {
+        "global": 0.44 - 0.08 * specialist_strength,
+        "conditional": 0.33 + 0.02 * specialist_strength,
+        "guarded": 0.23 + 0.06 * specialist_strength,
+    }
+    total_weight = sum(selector_weights.values())
+    selector_weights = {
+        key: value / total_weight
+        for key, value in selector_weights.items()
+    }
+
+    global_rank_map = _normalized_rank_map(global_ranked, ENSEMBLE_RANK_POOL)
+    conditional_rank_map = _normalized_rank_map(reranked, ENSEMBLE_RANK_POOL)
+    guarded_rank_map = _normalized_rank_map(guarded_ranked, ENSEMBLE_RANK_POOL)
+    global_value_map = _normalized_value_map(global_ranked, ENSEMBLE_RANK_POOL)
+
+    combined_scores: dict[tuple[tuple[int, ...], tuple[int, ...]], float] = {}
+    for candidate_key in set(global_rank_map).union(conditional_rank_map).union(guarded_rank_map):
+        combined_score = 0.12 * global_value_map.get(candidate_key, 0.0)
+        combined_score += selector_weights["global"] * global_rank_map.get(candidate_key, 0.0)
+        combined_score += selector_weights["conditional"] * conditional_rank_map.get(candidate_key, 0.0)
+        combined_score += selector_weights["guarded"] * guarded_rank_map.get(candidate_key, 0.0)
+        if candidate_key in guard_bonus_by_key:
+            combined_score += 0.06 * specialist_strength
+        combined_scores[candidate_key] = float(combined_score)
+
+    combined_ranked = sorted(combined_scores.items(), key=lambda item: item[1], reverse=True)
+    if specialist_strength >= 0.54 and guarded:
+        guarded_seed = [
+            (key, combined_scores.get(key, score + 0.05 * specialist_strength))
+            for key, score in guarded
+        ]
+        return _select_guarded_rerank_portfolio(guarded_seed, combined_ranked, top_k)
+    return _select_ranked_candidates(combined_ranked, top_k, _overlap_penalty)
 
 
 def generate_support_gated_star_guard_screen_050_tickets(

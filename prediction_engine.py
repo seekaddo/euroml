@@ -5,6 +5,7 @@ import json
 import logging
 from datetime import date, datetime
 from pathlib import Path
+from types import SimpleNamespace
 
 from engine.cache import DEFAULT_CACHE_DIR, load_cached_object, save_cached_object
 from engine.backtest import BacktestConfig, run_backtest
@@ -19,6 +20,7 @@ from engine.memory import (
     select_confidence_calibration,
 )
 from engine.spec import spec_for_draw_date
+from engine.strategy_runner import build_probability_maps
 from engine.strategies import available_strategy_names, get_strategy
 from engine.tickets import CandidateTicket, ticket_generator_signature
 from tabulate import tabulate
@@ -549,27 +551,19 @@ def run_predict_command(args: argparse.Namespace) -> None:
     prediction_rows = build_prediction_rows(history_records, target_date)
 
     logging.info("Training %s strategy for next draw %s", strategy.name, target_date.isoformat())
-    main_model = strategy.create_main_model(random_state=args.seed).fit(
-        feature_tables["main"]
-    )
-    star_model = strategy.create_star_model(random_state=args.seed).fit(
-        feature_tables["star"]
-    )
-
-    main_rows = prediction_rows["main"]
-    star_rows = prediction_rows["star"]
-    main_probabilities = dict(
-        zip(main_rows["candidate"].astype(int), main_model.predict_proba(main_rows), strict=True)
-    )
-    star_probabilities = dict(
-        zip(star_rows["candidate"].astype(int), star_model.predict_proba(star_rows), strict=True)
+    context = strategy.build_context(
+        records=history_records,
+        feature_tables=feature_tables,
+        train_cutoff=train_end,
+        random_state=args.seed,
     )
 
-    tickets = strategy.ticket_generator(
-        main_probabilities=main_probabilities,
-        star_probabilities=star_probabilities,
-        spec=spec_for_draw_date(target_date),
-        train_records=history_records,
+    target_record = SimpleNamespace(draw_date=target_date, draw_id=0, spec=spec_for_draw_date(target_date))
+
+    tickets = strategy.generate_tickets_from_context(
+        context=context,
+        feature_tables=prediction_rows,
+        target_record=target_record,
         top_k=args.top_k,
         sample_count=args.samples,
         random_state=args.seed,
@@ -594,22 +588,24 @@ def run_predict_command(args: argparse.Namespace) -> None:
         tickets = calibrated_tickets
     logging.info("Generated %s ranked candidate tickets for %s", len(tickets), target_date.isoformat())
 
-    top_main_probabilities = [
-        {"number": int(number), "probability": round(float(probability), 6)}
-        for number, probability in sorted(main_probabilities.items(), key=lambda item: item[1], reverse=True)[:10]
-    ]
-    top_star_probabilities = [
-        {"number": int(number), "probability": round(float(probability), 6)}
-        for number, probability in sorted(star_probabilities.items(), key=lambda item: item[1], reverse=True)[:6]
-    ]
+    if strategy.context_builder is None:
+        main_probabilities, star_probabilities = build_probability_maps(context, prediction_rows, target_record)
+        top_main_probabilities = [
+            {"number": int(number), "probability": round(float(probability), 6)}
+            for number, probability in sorted(main_probabilities.items(), key=lambda item: item[1], reverse=True)[:10]
+        ]
+        top_star_probabilities = [
+            {"number": int(number), "probability": round(float(probability), 6)}
+            for number, probability in sorted(star_probabilities.items(), key=lambda item: item[1], reverse=True)[:6]
+        ]
+    else:
+        top_main_probabilities = []
+        top_star_probabilities = []
 
     report = {
         "train_end": train_end.isoformat(),
         "next_draw_date": target_date.isoformat(),
-        "model_diagnostics": {
-            "main": main_model.diagnostics,
-            "star": star_model.diagnostics,
-        },
+        "model_diagnostics": strategy.diagnostics_from_context(context),
         "top_main_probabilities": top_main_probabilities,
         "top_star_probabilities": top_star_probabilities,
         "predictions": [_ticket_payload(rank, ticket) for rank, ticket in enumerate(tickets, start=1)],

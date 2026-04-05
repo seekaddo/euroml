@@ -1,15 +1,22 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Callable
+from datetime import date
+from typing import Any, Callable
 
 from engine.models import FamilyBlendProbabilityModel, InclusionProbabilityModel, MultiHistoryInclusionProbabilityModel
+from engine.strategy_runner import (
+    build_default_context,
+    default_context_diagnostics,
+    generate_tickets_from_default_context,
+)
 from engine.tickets import (
     CandidateTicket,
     generate_candidate_tickets,
     generate_conditional_two_stage_tickets,
     generate_conditional_rerank_tickets,
     generate_core_plus_guard_tickets,
+    generate_selector_ensemble_tickets,
     generate_hybrid_conditional_tickets,
     generate_adaptive_soft_star_guard_screen_tickets,
     generate_soft_star_guard_screen_tickets,
@@ -22,10 +29,14 @@ from engine.tickets import (
     generate_star_guard_rerank_tickets,
     generate_two_stage_star_tickets,
 )
+from engine.data import DrawRecord
 
 ProbabilityModel = InclusionProbabilityModel | MultiHistoryInclusionProbabilityModel | FamilyBlendProbabilityModel
 ModelFactory = Callable[[int], ProbabilityModel]
 TicketGenerator = Callable[..., list[CandidateTicket]]
+ContextBuilder = Callable[[list[DrawRecord], dict[str, Any], date, int], Any]
+ContextTicketGenerator = Callable[[Any, dict[str, Any], DrawRecord, int, int, int], list[CandidateTicket]]
+ContextDiagnostics = Callable[[Any], dict[str, object]]
 
 
 @dataclass(frozen=True)
@@ -36,12 +47,66 @@ class StrategySpec:
     main_factory: ModelFactory
     star_factory: ModelFactory
     ticket_generator: TicketGenerator = generate_candidate_tickets
+    context_builder: ContextBuilder | None = None
+    context_ticket_generator: ContextTicketGenerator | None = None
+    context_diagnostics: ContextDiagnostics | None = None
 
     def create_main_model(self, random_state: int) -> ProbabilityModel:
         return self.main_factory(random_state)
 
     def create_star_model(self, random_state: int) -> ProbabilityModel:
         return self.star_factory(random_state)
+
+    def build_context(
+        self,
+        records: list[DrawRecord],
+        feature_tables: dict[str, Any],
+        train_cutoff: date,
+        random_state: int,
+    ) -> Any:
+        if self.context_builder is not None:
+            return self.context_builder(records, feature_tables, train_cutoff, random_state)
+        return build_default_context(
+            records=records,
+            feature_tables=feature_tables,
+            train_cutoff=train_cutoff,
+            main_factory=self.main_factory,
+            star_factory=self.star_factory,
+            random_state=random_state,
+        )
+
+    def generate_tickets_from_context(
+        self,
+        context: Any,
+        feature_tables: dict[str, Any],
+        target_record: DrawRecord,
+        top_k: int,
+        sample_count: int,
+        random_state: int,
+    ) -> list[CandidateTicket]:
+        if self.context_ticket_generator is not None:
+            return self.context_ticket_generator(
+                context,
+                feature_tables,
+                target_record,
+                top_k,
+                sample_count,
+                random_state,
+            )
+        return generate_tickets_from_default_context(
+            context=context,
+            feature_tables=feature_tables,
+            target_record=target_record,
+            ticket_generator=self.ticket_generator,
+            top_k=top_k,
+            sample_count=sample_count,
+            random_state=random_state,
+        )
+
+    def diagnostics_from_context(self, context: Any) -> dict[str, object]:
+        if self.context_diagnostics is not None:
+            return self.context_diagnostics(context)
+        return default_context_diagnostics(context)
 
 
 def _baseline_factory(random_state: int) -> InclusionProbabilityModel:
@@ -67,6 +132,132 @@ def _hybrid_main_factory(random_state: int) -> FamilyBlendProbabilityModel:
             ("multi_history", _multi_history_factory),
         ),
     )
+
+
+def _ticket_key(ticket: CandidateTicket) -> tuple[tuple[int, ...], tuple[int, ...]]:
+    return ticket.main_numbers, ticket.star_numbers
+
+
+def _overlap_cost(left: CandidateTicket, right: CandidateTicket) -> float:
+    main_overlap = len(set(left.main_numbers).intersection(right.main_numbers))
+    star_overlap = len(set(left.star_numbers).intersection(right.star_numbers))
+    return 0.35 * main_overlap + 0.65 * star_overlap
+
+
+def _select_committee_from_source(
+    candidates: list[CandidateTicket],
+    selected: list[CandidateTicket],
+    quota: int,
+) -> list[CandidateTicket]:
+    chosen: list[CandidateTicket] = []
+    remaining = list(candidates)
+    used_keys = {_ticket_key(ticket) for ticket in selected}
+
+    while remaining and len(chosen) < quota:
+        best_ticket = max(
+            remaining,
+            key=lambda ticket: (
+                ticket.score
+                - 0.42 * max((_overlap_cost(ticket, existing) for existing in selected + chosen), default=0.0),
+                -sum(ticket.main_numbers),
+                -sum(ticket.star_numbers),
+            ),
+        )
+        remaining.remove(best_ticket)
+        ticket_key = _ticket_key(best_ticket)
+        if ticket_key in used_keys:
+            continue
+        chosen.append(best_ticket)
+        used_keys.add(ticket_key)
+
+    return chosen
+
+
+def _build_committee_context(
+    records: list[DrawRecord],
+    feature_tables: dict[str, Any],
+    train_cutoff: date,
+    random_state: int,
+) -> dict[str, Any]:
+    component_specs = {
+        "guarded": STRATEGIES["star_guard1_soft_screen_multi_history"],
+        "hybrid": STRATEGIES["hybrid_main_star_focus_soft_guard_screen"],
+        "baseline": STRATEGIES["baseline"],
+    }
+    component_contexts: dict[str, Any] = {}
+    component_diagnostics: dict[str, object] = {}
+    for index, (label, spec) in enumerate(component_specs.items(), start=1):
+        context = build_default_context(
+            records=records,
+            feature_tables=feature_tables,
+            train_cutoff=train_cutoff,
+            main_factory=spec.main_factory,
+            star_factory=spec.star_factory,
+            random_state=random_state + 101 * index,
+        )
+        component_contexts[label] = {
+            "strategy": spec,
+            "context": context,
+        }
+        diagnostics = default_context_diagnostics(context)
+        for component_name, component_diag in diagnostics.items():
+            component_diagnostics[f"{label}.{component_name}"] = component_diag
+
+    return {
+        "components": component_contexts,
+        "diagnostics": component_diagnostics,
+    }
+
+
+def _generate_committee_guarded_hybrid_tickets(
+    context: dict[str, Any],
+    feature_tables: dict[str, Any],
+    target_record: DrawRecord,
+    top_k: int,
+    sample_count: int,
+    random_state: int,
+) -> list[CandidateTicket]:
+    component_requests = (
+        ("guarded", 2, 4),
+        ("hybrid", 2, 4),
+        ("baseline", 1, 3),
+    )
+    source_candidates: dict[str, list[CandidateTicket]] = {}
+    for index, (label, _, component_top_k) in enumerate(component_requests, start=1):
+        payload = context["components"][label]
+        strategy = payload["strategy"]
+        source_candidates[label] = generate_tickets_from_default_context(
+            context=payload["context"],
+            feature_tables=feature_tables,
+            target_record=target_record,
+            ticket_generator=strategy.ticket_generator,
+            top_k=component_top_k,
+            sample_count=sample_count,
+            random_state=random_state + 503 * index,
+        )
+
+    selected: list[CandidateTicket] = []
+    for label, quota, _ in component_requests:
+        selected.extend(_select_committee_from_source(source_candidates[label], selected, quota))
+        if len(selected) >= top_k:
+            return selected[:top_k]
+
+    fallback_pool: list[CandidateTicket] = []
+    selected_keys = {_ticket_key(ticket) for ticket in selected}
+    for label, _, _ in component_requests:
+        for ticket in source_candidates[label]:
+            ticket_key = _ticket_key(ticket)
+            if ticket_key in selected_keys:
+                continue
+            fallback_pool.append(ticket)
+            selected_keys.add(ticket_key)
+
+    selected.extend(_select_committee_from_source(fallback_pool, selected, max(0, top_k - len(selected))))
+    return selected[:top_k]
+
+
+def _committee_context_diagnostics(context: dict[str, Any]) -> dict[str, object]:
+    return context["diagnostics"]
 
 
 STRATEGIES: dict[str, StrategySpec] = {
@@ -282,6 +473,24 @@ STRATEGIES: dict[str, StrategySpec] = {
         main_factory=_hybrid_main_factory,
         star_factory=_star_focus_factory,
         ticket_generator=generate_core_plus_guard_tickets,
+    ),
+    "committee_guarded_hybrid": StrategySpec(
+        name="committee_guarded_hybrid",
+        description="Committee portfolio: guarded 2025 expert, hybrid 2026 expert, and one conservative baseline ticket.",
+        signature="strategy-committee-guarded-hybrid-v1",
+        main_factory=_baseline_factory,
+        star_factory=_baseline_factory,
+        context_builder=_build_committee_context,
+        context_ticket_generator=_generate_committee_guarded_hybrid_tickets,
+        context_diagnostics=_committee_context_diagnostics,
+    ),
+    "hybrid_main_star_focus_selector_ensemble": StrategySpec(
+        name="hybrid_main_star_focus_selector_ensemble",
+        description="Blend baseline and multi-history main models, keep the star specialist, and combine safe, conditional, and guarded selector experts into one portfolio.",
+        signature="strategy-hybrid-main-star-focus-selector-ensemble-v1",
+        main_factory=_hybrid_main_factory,
+        star_factory=_star_focus_factory,
+        ticket_generator=generate_selector_ensemble_tickets,
     ),
 }
 
