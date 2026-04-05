@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Callable
 
-from engine.models import InclusionProbabilityModel, MultiHistoryInclusionProbabilityModel
+from engine.models import FamilyBlendProbabilityModel, InclusionProbabilityModel, MultiHistoryInclusionProbabilityModel
 from engine.tickets import (
     CandidateTicket,
     generate_candidate_tickets,
@@ -23,7 +23,7 @@ from engine.tickets import (
     generate_two_stage_star_tickets,
 )
 
-ProbabilityModel = InclusionProbabilityModel | MultiHistoryInclusionProbabilityModel
+ProbabilityModel = InclusionProbabilityModel | MultiHistoryInclusionProbabilityModel | FamilyBlendProbabilityModel
 ModelFactory = Callable[[int], ProbabilityModel]
 TicketGenerator = Callable[..., list[CandidateTicket]]
 
@@ -56,6 +56,16 @@ def _star_focus_factory(random_state: int) -> MultiHistoryInclusionProbabilityMo
     return MultiHistoryInclusionProbabilityModel(
         random_state=random_state,
         history_windows=(None, 260, 104, 52, 26),
+    )
+
+
+def _hybrid_main_factory(random_state: int) -> FamilyBlendProbabilityModel:
+    return FamilyBlendProbabilityModel(
+        random_state=random_state,
+        factories=(
+            ("baseline", _baseline_factory),
+            ("multi_history", _multi_history_factory),
+        ),
     )
 
 
@@ -254,6 +264,22 @@ STRATEGIES: dict[str, StrategySpec] = {
         description="Baseline main-number model with a multi-history Lucky Star specialist and a baseline-core plus guarded-ticket portfolio.",
         signature="strategy-star-focus-core-plus-guard-v1",
         main_factory=_baseline_factory,
+        star_factory=_star_focus_factory,
+        ticket_generator=generate_core_plus_guard_tickets,
+    ),
+    "hybrid_main_star_focus_soft_guard_screen": StrategySpec(
+        name="hybrid_main_star_focus_soft_guard_screen",
+        description="Blend baseline and multi-history main models, keep the star specialist, and use the one-guard soft screen selector.",
+        signature="strategy-hybrid-main-star-focus-soft-guard-screen-v1",
+        main_factory=_hybrid_main_factory,
+        star_factory=_star_focus_factory,
+        ticket_generator=generate_star_guard1_soft_screen_tickets,
+    ),
+    "hybrid_main_star_focus_core_plus_guard": StrategySpec(
+        name="hybrid_main_star_focus_core_plus_guard",
+        description="Blend baseline and multi-history main models with the star specialist and a baseline-core plus guarded-ticket portfolio.",
+        signature="strategy-hybrid-main-star-focus-core-plus-guard-v1",
+        main_factory=_hybrid_main_factory,
         star_factory=_star_focus_factory,
         ticket_generator=generate_core_plus_guard_tickets,
     ),

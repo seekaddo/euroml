@@ -13,7 +13,7 @@ on:
       strategies:
         description: "Space-separated strategy names to compare"
         required: true
-        default: "baseline star_guard1_soft_screen_multi_history star_focus_soft_guard_screen star_focus_core_plus_guard"
+        default: "baseline star_guard1_soft_screen_multi_history hybrid_main_star_focus_soft_guard_screen hybrid_main_star_focus_core_plus_guard"
       prediction_strategy:
         description: "Strategy used for next-draw prediction"
         required: true
@@ -33,7 +33,7 @@ concurrency:
 
 env:
   SAMPLES: ${{ github.event.inputs.samples || '50' }}
-  RESEARCH_STRATEGIES: ${{ github.event.inputs.strategies || 'baseline star_guard1_soft_screen_multi_history star_focus_soft_guard_screen star_focus_core_plus_guard' }}
+  RESEARCH_STRATEGIES: ${{ github.event.inputs.strategies || 'baseline star_guard1_soft_screen_multi_history hybrid_main_star_focus_soft_guard_screen hybrid_main_star_focus_core_plus_guard' }}
   PREDICTION_STRATEGY: ${{ github.event.inputs.prediction_strategy || 'baseline' }}
   OUTPUT_DIR: research_outputs/latest
   UV_CACHE_DIR: .uv-cache

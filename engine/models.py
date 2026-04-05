@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Any, Callable
 
 import numpy as np
 import pandas as pd
@@ -345,6 +346,114 @@ class MultiHistoryInclusionProbabilityModel:
         if total_weight <= 0.0:
             fallback = InclusionProbabilityModel(random_state=self.random_state).fit(frame)
             return [("all", 1.0, fallback)]
+
+        return [
+            (label, weight / total_weight, expert)
+            for label, weight, expert in experts
+        ]
+
+    def _weights_from_losses(self, losses: dict[str, float]) -> dict[str, float]:
+        inverse_losses = {
+            label: 1.0 / max(loss, 1e-9)
+            for label, loss in losses.items()
+        }
+        total = sum(inverse_losses.values())
+        return {
+            label: float(value / total)
+            for label, value in inverse_losses.items()
+        }
+
+
+ModelFactory = Callable[[int], Any]
+
+
+class FamilyBlendProbabilityModel:
+    def __init__(
+        self,
+        factories: tuple[tuple[str, ModelFactory], ...],
+        random_state: int = 7,
+    ) -> None:
+        self.factories = factories
+        self.random_state = random_state
+        self.expert_models: list[tuple[str, float, Any]] = []
+        self.diagnostics: dict[str, float | int | str | dict[str, float]] = {}
+
+    def fit(self, frame: pd.DataFrame) -> "FamilyBlendProbabilityModel":
+        if frame.empty:
+            raise ValueError("Cannot fit on an empty frame")
+
+        probe_model = InclusionProbabilityModel(random_state=self.random_state)
+        train_frame, validation_frame, validation_draw_count = probe_model._validation_split(frame)
+
+        if train_frame is None or validation_frame is None:
+            self.expert_models = self._fit_final_experts(frame, self._equal_weights())
+            self.diagnostics = {
+                "model_type": "family_blend",
+                "training_rows": int(len(frame)),
+                "validation_draw_count": 0,
+                "expert_weights": {label: round(weight, 4) for label, weight, _ in self.expert_models},
+            }
+            return self
+
+        validation_targets = validation_frame["target"].to_numpy(dtype=int)
+        expert_losses: dict[str, float] = {}
+        for label, factory in self.factories:
+            expert = factory(self.random_state)
+            expert.fit(train_frame)
+            probabilities = expert.predict_proba(validation_frame)
+            expert_losses[label] = float(brier_score_loss(validation_targets, probabilities))
+
+        learned_weights = self._weights_from_losses(expert_losses)
+        self.expert_models = self._fit_final_experts(frame, learned_weights)
+        blended_probabilities = self.predict_proba(validation_frame)
+        blend_loss = float(brier_score_loss(validation_targets, blended_probabilities))
+        self.diagnostics = {
+            "model_type": "family_blend",
+            "training_rows": int(len(frame)),
+            "validation_rows": int(len(validation_frame)),
+            "validation_draw_count": int(validation_draw_count),
+            "blend_brier": blend_loss,
+            "expert_brier": {label: round(loss, 6) for label, loss in expert_losses.items()},
+            "expert_weights": {label: round(weight, 4) for label, weight, _ in self.expert_models},
+        }
+        return self
+
+    def predict_proba(self, frame: pd.DataFrame) -> np.ndarray:
+        if frame.empty:
+            return np.array([], dtype=float)
+        if not self.expert_models:
+            raise ValueError("Model must be fit before calling predict_proba")
+
+        blended = np.zeros(len(frame), dtype=float)
+        for _, weight, model in self.expert_models:
+            blended += weight * model.predict_proba(frame)
+        return np.clip(blended, 1e-6, 1.0 - 1e-6)
+
+    def _equal_weights(self) -> dict[str, float]:
+        if not self.factories:
+            return {}
+        weight = 1.0 / len(self.factories)
+        return {label: weight for label, _ in self.factories}
+
+    def _fit_final_experts(
+        self,
+        frame: pd.DataFrame,
+        weights: dict[str, float],
+    ) -> list[tuple[str, float, Any]]:
+        experts: list[tuple[str, float, Any]] = []
+        for label, factory in self.factories:
+            weight = weights.get(label, 0.0)
+            if weight <= 0.0:
+                continue
+            expert = factory(self.random_state)
+            expert.fit(frame)
+            experts.append((label, float(weight), expert))
+
+        total_weight = sum(weight for _, weight, _ in experts)
+        if total_weight <= 0.0:
+            label, factory = self.factories[0]
+            fallback = factory(self.random_state).fit(frame)
+            return [(label, 1.0, fallback)]
 
         return [
             (label, weight / total_weight, expert)
