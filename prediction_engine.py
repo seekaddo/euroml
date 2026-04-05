@@ -351,7 +351,10 @@ def _comparison_row(report: dict[str, object]) -> dict[str, object]:
     }
 
 
-def _comparison_details(report: dict[str, object]) -> dict[str, object]:
+def _comparison_details(
+    report: dict[str, object],
+    calibration: dict[str, object] | None = None,
+) -> dict[str, object]:
     useful_patterns = {"2+2", "3+1", "3+2", "4+1", "4+2", "5+2"}
 
     def best_prediction(draw: dict[str, object], *, top1_only: bool) -> dict[str, object] | None:
@@ -391,11 +394,14 @@ def _comparison_details(report: dict[str, object]) -> dict[str, object]:
             )
         return rows
 
-    return {
+    payload = {
         "summary": _comparison_row(report),
         "best5_events": event_rows(top1_only=False),
         "top1_events": event_rows(top1_only=True),
     }
+    if calibration is not None:
+        payload["confidence_calibration"] = calibration
+    return payload
 
 
 def run_backtest_command(args: argparse.Namespace) -> None:
@@ -475,6 +481,7 @@ def run_compare_strategies_command(args: argparse.Namespace) -> None:
 
     comparison_reports: list[dict[str, object]] = []
     comparison_rows: list[dict[str, object]] = []
+    comparison_details: dict[str, dict[str, object]] = {}
     for strategy_name in args.strategies:
         strategy = get_strategy(strategy_name)
         logging.info("Comparing strategy %s", strategy.name)
@@ -494,6 +501,11 @@ def run_compare_strategies_command(args: argparse.Namespace) -> None:
         )
         comparison_reports.append(report)
         comparison_rows.append(_comparison_row(report))
+        calibration = build_confidence_calibration(report)
+        if calibration is not None:
+            calibration["dataset_fingerprint"] = fingerprint
+            calibration["engine_signature"] = _engine_signature(strategy.name)
+        comparison_details[report["summary"].get("strategy", "baseline")] = _comparison_details(report, calibration)
 
     print("\nStrategy Comparison")
     print(tabulate(comparison_rows, headers="keys", tablefmt="github", floatfmt=".4f"))
@@ -506,10 +518,7 @@ def run_compare_strategies_command(args: argparse.Namespace) -> None:
             "mode": args.mode,
             "strategies": args.strategies,
             "results": comparison_rows,
-            "details": {
-                report["summary"].get("strategy", "baseline"): _comparison_details(report)
-                for report in comparison_reports
-            },
+            "details": comparison_details,
         }
         _save_optional_output(args.output, payload)
 
