@@ -78,8 +78,10 @@ def best_result(payload: dict[str, object]) -> dict[str, object]:
     return max(
         results,
         key=lambda row: (
-            float(row["3+2_count"]),
             float(row["4+2_count"]),
+            float(row["3+2_count"]),
+            float(row.get("useful_rate", 0.0)),
+            float(row.get("3+1_count", 0.0)),
             float(row["2+2_rate"]),
             float(row["best5_w"]),
             float(row["lift_best5"]),
@@ -89,6 +91,10 @@ def best_result(payload: dict[str, object]) -> dict[str, object]:
 
 best_2025 = best_result(compare_2025)
 best_2026 = best_result(compare_2026)
+details_2025 = compare_2025.get("details", {})
+details_2026 = compare_2026.get("details", {})
+best_2025_events = details_2025.get(best_2025["strategy"], {}).get("best5_events", [])
+best_2026_events = details_2026.get(best_2026["strategy"], {}).get("best5_events", [])
 predictions = next_prediction.get("predictions", [])
 top_prediction = predictions[0] if predictions else None
 
@@ -119,23 +125,55 @@ lines = [
     f"- Strategy: `{best_2025['strategy']}`",
     f"- `best5_w`: `{best_2025['best5_w']}`",
     f"- `lift_best5`: `{best_2025['lift_best5']}`",
+    f"- `useful_rate`: `{best_2025.get('useful_rate', 0.0)}`",
     f"- `2+2_rate`: `{best_2025['2+2_rate']}`",
+    f"- `3+1_count`: `{best_2025.get('3+1_count', 0)}`",
     f"- `3+2_count`: `{best_2025['3+2_count']}`",
     f"- `4+2_count`: `{best_2025['4+2_count']}`",
     "",
-    "## Best 2026 Window Result",
+    "### Best 2025 Useful Hits",
     "",
-    f"- Strategy: `{best_2026['strategy']}`",
-    f"- `best5_w`: `{best_2026['best5_w']}`",
-    f"- `lift_best5`: `{best_2026['lift_best5']}`",
-    f"- `2+2_rate`: `{best_2026['2+2_rate']}`",
-    f"- `3+2_count`: `{best_2026['3+2_count']}`",
-    f"- `4+2_count`: `{best_2026['4+2_count']}`",
-    "",
-    "## Next Prediction",
-    "",
-    f"- Target draw date: `{next_prediction.get('next_draw_date')}`",
 ]
+
+if best_2025_events:
+    for event in best_2025_events:
+        lines.append(f"- `{event['draw_date']}` `{event['hit']}`")
+else:
+    lines.append("- None")
+
+lines.extend(
+    [
+        "",
+        "## Best 2026 Window Result",
+        "",
+        f"- Strategy: `{best_2026['strategy']}`",
+        f"- `best5_w`: `{best_2026['best5_w']}`",
+        f"- `lift_best5`: `{best_2026['lift_best5']}`",
+        f"- `useful_rate`: `{best_2026.get('useful_rate', 0.0)}`",
+        f"- `2+2_rate`: `{best_2026['2+2_rate']}`",
+        f"- `3+1_count`: `{best_2026.get('3+1_count', 0)}`",
+        f"- `3+2_count`: `{best_2026['3+2_count']}`",
+        f"- `4+2_count`: `{best_2026['4+2_count']}`",
+        "",
+        "### Best 2026 Useful Hits",
+        "",
+    ]
+)
+
+if best_2026_events:
+    for event in best_2026_events:
+        lines.append(f"- `{event['draw_date']}` `{event['hit']}`")
+else:
+    lines.append("- None")
+
+lines.extend(
+    [
+        "",
+        "## Next Prediction",
+        "",
+        f"- Target draw date: `{next_prediction.get('next_draw_date')}`",
+    ]
+)
 
 if top_prediction is not None:
     main_numbers = " ".join(f"{number:02d}" for number in top_prediction["main_numbers"])

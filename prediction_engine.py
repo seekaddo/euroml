@@ -333,6 +333,7 @@ def _comparison_row(report: dict[str, object]) -> dict[str, object]:
     milestones = report.get("milestones", {})
     best5_row = milestones.get("best5", {})
     best5_rates = best5_row.get("rate", {})
+    best5_counts = best5_row.get("count", {})
     release_gate = report.get("release_gate", {}).get("best5", {})
     release_patterns = release_gate.get("patterns", {})
     return {
@@ -341,10 +342,59 @@ def _comparison_row(report: dict[str, object]) -> dict[str, object]:
         "top1_w": summary["top1_avg_weighted_hits"],
         "best5_w": summary["best5_avg_weighted_hits"],
         "lift_best5": summary["lift_best5_weighted_hits"],
+        "useful_rate": best5_row.get("useful_hit_rate", 0.0),
         "2+2_rate": best5_rates.get("2+2", 0.0),
+        "3+1_count": best5_counts.get("3+1", 0),
         "3+2_count": release_patterns.get("3+2", {}).get("count", 0),
         "4+2_count": release_patterns.get("4+2", {}).get("count", 0),
         "release_pass": release_gate.get("window_pass", False),
+    }
+
+
+def _comparison_details(report: dict[str, object]) -> dict[str, object]:
+    useful_patterns = {"2+2", "3+1", "3+2", "4+1", "4+2", "5+2"}
+
+    def best_prediction(draw: dict[str, object], *, top1_only: bool) -> dict[str, object] | None:
+        predictions = draw.get("predictions", [])
+        if not predictions:
+            return None
+        if top1_only:
+            return predictions[0]
+        return max(
+            predictions,
+            key=lambda item: (item["weighted_hits"], item["main_hits"], item["star_hits"], -item["rank"]),
+        )
+
+    def event_rows(*, top1_only: bool) -> list[dict[str, object]]:
+        rows: list[dict[str, object]] = []
+        for draw in report.get("draws", []):
+            prediction = best_prediction(draw, top1_only=top1_only)
+            if prediction is None:
+                continue
+            hit = f"{prediction['main_hits']}+{prediction['star_hits']}"
+            if hit not in useful_patterns:
+                continue
+            rows.append(
+                {
+                    "draw_date": draw["draw_date"],
+                    "rank": prediction["rank"],
+                    "hit": hit,
+                    "prediction": {
+                        "main_numbers": list(prediction["main_numbers"]),
+                        "star_numbers": list(prediction["star_numbers"]),
+                    },
+                    "actual": {
+                        "main_numbers": list(draw["actual_main_numbers"]),
+                        "star_numbers": list(draw["actual_star_numbers"]),
+                    },
+                }
+            )
+        return rows
+
+    return {
+        "summary": _comparison_row(report),
+        "best5_events": event_rows(top1_only=False),
+        "top1_events": event_rows(top1_only=True),
     }
 
 
@@ -456,6 +506,10 @@ def run_compare_strategies_command(args: argparse.Namespace) -> None:
             "mode": args.mode,
             "strategies": args.strategies,
             "results": comparison_rows,
+            "details": {
+                report["summary"].get("strategy", "baseline"): _comparison_details(report)
+                for report in comparison_reports
+            },
         }
         _save_optional_output(args.output, payload)
 
