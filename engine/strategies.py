@@ -241,6 +241,22 @@ STRATEGIES: dict[str, StrategySpec] = {
         star_factory=_baseline_factory,
         ticket_generator=generate_core_plus_guard_tickets,
     ),
+    "star_focus_soft_guard_screen": StrategySpec(
+        name="star_focus_soft_guard_screen",
+        description="Baseline main-number model with a multi-history Lucky Star specialist and the one-guard soft screen selector.",
+        signature="strategy-star-focus-soft-guard-screen-v1",
+        main_factory=_baseline_factory,
+        star_factory=_star_focus_factory,
+        ticket_generator=generate_star_guard1_soft_screen_tickets,
+    ),
+    "star_focus_core_plus_guard": StrategySpec(
+        name="star_focus_core_plus_guard",
+        description="Baseline main-number model with a multi-history Lucky Star specialist and a baseline-core plus guarded-ticket portfolio.",
+        signature="strategy-star-focus-core-plus-guard-v1",
+        main_factory=_baseline_factory,
+        star_factory=_star_focus_factory,
+        ticket_generator=generate_core_plus_guard_tickets,
+    ),
 }
 
 
