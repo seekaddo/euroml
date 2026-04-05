@@ -1,9 +1,9 @@
 # Research Cycle Summary
 
-- Generated: `2026-04-05T05:29:14Z`
+- Generated: `2026-04-05T05:52:02Z`
 - Samples: `50`
 - Prediction strategy: `baseline`
-- Strategies compared: `baseline, star_guard1_soft_screen_multi_history, adaptive_soft_star_guard_screen_multi_history, adaptive_soft_star_guard_screen_baseline`
+- Strategies compared: `baseline, star_guard1_soft_screen_multi_history, core_plus_guard_multi_history, core_plus_guard_baseline`
 
 ## Best 2025 Window Result
 

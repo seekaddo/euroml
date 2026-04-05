@@ -130,7 +130,7 @@
         11
       ],
       "score": -16.695769,
-      "confidence": 6
+      "confidence": 1
     },
     {
       "rank": 3,
@@ -146,7 +146,7 @@
         9
       ],
       "score": -16.773983,
-      "confidence": 8
+      "confidence": 6
     },
     {
       "rank": 4,
@@ -162,7 +162,7 @@
         12
       ],
       "score": -16.793902,
-      "confidence": 8
+      "confidence": 6
     },
     {
       "rank": 5,
@@ -178,7 +178,13 @@
         9
       ],
       "score": -16.828342,
-      "confidence": 8
+      "confidence": 9
     }
-  ]
+  ],
+  "confidence_calibration_source": {
+    "mode": "frozen",
+    "test_start": "2025-01-01",
+    "test_end": "2025-12-31",
+    "observation_count": 520
+  }
 }
