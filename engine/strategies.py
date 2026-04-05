@@ -256,6 +256,101 @@ def _generate_committee_guarded_hybrid_tickets(
     return selected[:top_k]
 
 
+def _select_specialist_candidate(
+    candidates: list[CandidateTicket],
+    selected: list[CandidateTicket],
+    fallback_ticket: CandidateTicket,
+    score_drop_limit: float,
+) -> CandidateTicket | None:
+    chosen: CandidateTicket | None = None
+    chosen_score = float("-inf")
+    selected_star_pairs = {ticket.star_numbers for ticket in selected}
+    selected_keys = {_ticket_key(ticket) for ticket in selected}
+
+    for candidate in candidates:
+        candidate_key = _ticket_key(candidate)
+        if candidate_key in selected_keys:
+            continue
+        novelty_bonus = 0.12 if candidate.star_numbers not in selected_star_pairs else 0.0
+        overlap_penalty = max((_overlap_cost(candidate, existing) for existing in selected), default=0.0)
+        adjusted_score = candidate.score + novelty_bonus - 0.45 * overlap_penalty
+        if adjusted_score > chosen_score:
+            chosen = candidate
+            chosen_score = adjusted_score
+
+    if chosen is None:
+        return None
+    if chosen.score + 0.08 < fallback_ticket.score - score_drop_limit:
+        return None
+    return chosen
+
+
+def _generate_baseline_core_dual_specialist_tickets(
+    context: dict[str, Any],
+    feature_tables: dict[str, Any],
+    target_record: DrawRecord,
+    top_k: int,
+    sample_count: int,
+    random_state: int,
+) -> list[CandidateTicket]:
+    component_top_k = {
+        "baseline": max(top_k, 5),
+        "hybrid": 3,
+        "guarded": 3,
+    }
+    source_candidates: dict[str, list[CandidateTicket]] = {}
+    for index, label in enumerate(("baseline", "hybrid", "guarded"), start=1):
+        payload = context["components"][label]
+        strategy = payload["strategy"]
+        source_candidates[label] = generate_tickets_from_default_context(
+            context=payload["context"],
+            feature_tables=feature_tables,
+            target_record=target_record,
+            ticket_generator=strategy.ticket_generator,
+            top_k=component_top_k[label],
+            sample_count=sample_count,
+            random_state=random_state + 607 * index,
+        )
+
+    baseline_portfolio = source_candidates["baseline"][:top_k]
+    if len(baseline_portfolio) <= 3:
+        return baseline_portfolio
+
+    selected = list(baseline_portfolio[:3])
+    fallback_tail = list(baseline_portfolio[3:])
+
+    hybrid_fallback = fallback_tail[0] if fallback_tail else baseline_portfolio[-1]
+    hybrid_choice = _select_specialist_candidate(
+        candidates=source_candidates["hybrid"],
+        selected=selected,
+        fallback_ticket=hybrid_fallback,
+        score_drop_limit=0.24,
+    )
+    selected.append(hybrid_choice or hybrid_fallback)
+
+    remaining_fallback = [ticket for ticket in fallback_tail if _ticket_key(ticket) not in {_ticket_key(item) for item in selected}]
+    guard_fallback = remaining_fallback[0] if remaining_fallback else baseline_portfolio[-1]
+    guard_choice = _select_specialist_candidate(
+        candidates=source_candidates["guarded"],
+        selected=selected,
+        fallback_ticket=guard_fallback,
+        score_drop_limit=0.18,
+    )
+    selected.append(guard_choice or guard_fallback)
+
+    selected_keys = {_ticket_key(ticket) for ticket in selected}
+    for ticket in baseline_portfolio:
+        ticket_key = _ticket_key(ticket)
+        if ticket_key in selected_keys:
+            continue
+        selected.append(ticket)
+        selected_keys.add(ticket_key)
+        if len(selected) >= top_k:
+            break
+
+    return selected[:top_k]
+
+
 def _committee_context_diagnostics(context: dict[str, Any]) -> dict[str, object]:
     return context["diagnostics"]
 
@@ -482,6 +577,16 @@ STRATEGIES: dict[str, StrategySpec] = {
         star_factory=_baseline_factory,
         context_builder=_build_committee_context,
         context_ticket_generator=_generate_committee_guarded_hybrid_tickets,
+        context_diagnostics=_committee_context_diagnostics,
+    ),
+    "baseline_core_dual_specialist": StrategySpec(
+        name="baseline_core_dual_specialist",
+        description="Keep a baseline 3-ticket core, then allow one hybrid star-focused specialist and one guarded specialist if they clear score and diversity gates.",
+        signature="strategy-baseline-core-dual-specialist-v1",
+        main_factory=_baseline_factory,
+        star_factory=_baseline_factory,
+        context_builder=_build_committee_context,
+        context_ticket_generator=_generate_baseline_core_dual_specialist_tickets,
         context_diagnostics=_committee_context_diagnostics,
     ),
     "hybrid_main_star_focus_selector_ensemble": StrategySpec(
