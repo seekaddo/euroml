@@ -5,9 +5,11 @@
   "mode": "frozen",
   "strategies": [
     "baseline",
-    "star_guard_rerank_multi_history",
     "star_guard1_soft_screen_multi_history",
-    "soft_star_guard_screen_multi_history"
+    "support_gated_star_guard_screen_050_multi_history",
+    "support_gated_star_guard_screen_060_multi_history",
+    "support_gated_star_guard_screen_050_baseline",
+    "support_gated_star_guard_screen_060_baseline"
   ],
   "results": [
     {
@@ -16,18 +18,9 @@
       "top1_w": 1,
       "best5_w": 3,
       "lift_best5": 0.2222,
+      "useful_rate": 0.037,
       "2+2_rate": 0.037,
-      "3+2_count": 0,
-      "4+2_count": 0,
-      "release_pass": false
-    },
-    {
-      "strategy": "star_guard_rerank_multi_history",
-      "mode": "frozen",
-      "top1_w": 1.1111,
-      "best5_w": 2.7778,
-      "lift_best5": 0.0,
-      "2+2_rate": 0.0,
+      "3+1_count": 0,
       "3+2_count": 0,
       "4+2_count": 0,
       "release_pass": false
@@ -38,21 +31,200 @@
       "top1_w": 1.1111,
       "best5_w": 2.6296,
       "lift_best5": -0.1481,
+      "useful_rate": 0.0,
       "2+2_rate": 0.0,
+      "3+1_count": 0,
       "3+2_count": 0,
       "4+2_count": 0,
       "release_pass": false
     },
     {
-      "strategy": "soft_star_guard_screen_multi_history",
+      "strategy": "support_gated_star_guard_screen_050_multi_history",
       "mode": "frozen",
       "top1_w": 1.1111,
-      "best5_w": 2.4074,
-      "lift_best5": -0.3704,
+      "best5_w": 2.6296,
+      "lift_best5": -0.1481,
+      "useful_rate": 0.0,
       "2+2_rate": 0.0,
+      "3+1_count": 0,
+      "3+2_count": 0,
+      "4+2_count": 0,
+      "release_pass": false
+    },
+    {
+      "strategy": "support_gated_star_guard_screen_060_multi_history",
+      "mode": "frozen",
+      "top1_w": 1.1111,
+      "best5_w": 2.6296,
+      "lift_best5": -0.1481,
+      "useful_rate": 0.0,
+      "2+2_rate": 0.0,
+      "3+1_count": 0,
+      "3+2_count": 0,
+      "4+2_count": 0,
+      "release_pass": false
+    },
+    {
+      "strategy": "support_gated_star_guard_screen_050_baseline",
+      "mode": "frozen",
+      "top1_w": 0.963,
+      "best5_w": 2.8889,
+      "lift_best5": 0.1111,
+      "useful_rate": 0.0,
+      "2+2_rate": 0.0,
+      "3+1_count": 0,
+      "3+2_count": 0,
+      "4+2_count": 0,
+      "release_pass": false
+    },
+    {
+      "strategy": "support_gated_star_guard_screen_060_baseline",
+      "mode": "frozen",
+      "top1_w": 0.963,
+      "best5_w": 2.8889,
+      "lift_best5": 0.1111,
+      "useful_rate": 0.0,
+      "2+2_rate": 0.0,
+      "3+1_count": 0,
       "3+2_count": 0,
       "4+2_count": 0,
       "release_pass": false
     }
-  ]
+  ],
+  "details": {
+    "baseline": {
+      "summary": {
+        "strategy": "baseline",
+        "mode": "frozen",
+        "top1_w": 1,
+        "best5_w": 3,
+        "lift_best5": 0.2222,
+        "useful_rate": 0.037,
+        "2+2_rate": 0.037,
+        "3+1_count": 0,
+        "3+2_count": 0,
+        "4+2_count": 0,
+        "release_pass": false
+      },
+      "best5_events": [
+        {
+          "draw_date": "2026-01-02",
+          "rank": 2,
+          "hit": "2+2",
+          "prediction": {
+            "main_numbers": [
+              16,
+              23,
+              27,
+              31,
+              44
+            ],
+            "star_numbers": [
+              1,
+              10
+            ]
+          },
+          "actual": {
+            "main_numbers": [
+              8,
+              27,
+              42,
+              44,
+              46
+            ],
+            "star_numbers": [
+              1,
+              10
+            ]
+          }
+        }
+      ],
+      "top1_events": []
+    },
+    "star_guard1_soft_screen_multi_history": {
+      "summary": {
+        "strategy": "star_guard1_soft_screen_multi_history",
+        "mode": "frozen",
+        "top1_w": 1.1111,
+        "best5_w": 2.6296,
+        "lift_best5": -0.1481,
+        "useful_rate": 0.0,
+        "2+2_rate": 0.0,
+        "3+1_count": 0,
+        "3+2_count": 0,
+        "4+2_count": 0,
+        "release_pass": false
+      },
+      "best5_events": [],
+      "top1_events": []
+    },
+    "support_gated_star_guard_screen_050_multi_history": {
+      "summary": {
+        "strategy": "support_gated_star_guard_screen_050_multi_history",
+        "mode": "frozen",
+        "top1_w": 1.1111,
+        "best5_w": 2.6296,
+        "lift_best5": -0.1481,
+        "useful_rate": 0.0,
+        "2+2_rate": 0.0,
+        "3+1_count": 0,
+        "3+2_count": 0,
+        "4+2_count": 0,
+        "release_pass": false
+      },
+      "best5_events": [],
+      "top1_events": []
+    },
+    "support_gated_star_guard_screen_060_multi_history": {
+      "summary": {
+        "strategy": "support_gated_star_guard_screen_060_multi_history",
+        "mode": "frozen",
+        "top1_w": 1.1111,
+        "best5_w": 2.6296,
+        "lift_best5": -0.1481,
+        "useful_rate": 0.0,
+        "2+2_rate": 0.0,
+        "3+1_count": 0,
+        "3+2_count": 0,
+        "4+2_count": 0,
+        "release_pass": false
+      },
+      "best5_events": [],
+      "top1_events": []
+    },
+    "support_gated_star_guard_screen_050_baseline": {
+      "summary": {
+        "strategy": "support_gated_star_guard_screen_050_baseline",
+        "mode": "frozen",
+        "top1_w": 0.963,
+        "best5_w": 2.8889,
+        "lift_best5": 0.1111,
+        "useful_rate": 0.0,
+        "2+2_rate": 0.0,
+        "3+1_count": 0,
+        "3+2_count": 0,
+        "4+2_count": 0,
+        "release_pass": false
+      },
+      "best5_events": [],
+      "top1_events": []
+    },
+    "support_gated_star_guard_screen_060_baseline": {
+      "summary": {
+        "strategy": "support_gated_star_guard_screen_060_baseline",
+        "mode": "frozen",
+        "top1_w": 0.963,
+        "best5_w": 2.8889,
+        "lift_best5": 0.1111,
+        "useful_rate": 0.0,
+        "2+2_rate": 0.0,
+        "3+1_count": 0,
+        "3+2_count": 0,
+        "4+2_count": 0,
+        "release_pass": false
+      },
+      "best5_events": [],
+      "top1_events": []
+    }
+  }
 }
