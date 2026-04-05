@@ -191,6 +191,22 @@ STRATEGIES: dict[str, StrategySpec] = {
         star_factory=_multi_history_factory,
         ticket_generator=generate_support_gated_star_guard_screen_060_tickets,
     ),
+    "support_gated_star_guard_screen_050_baseline": StrategySpec(
+        name="support_gated_star_guard_screen_050_baseline",
+        description="Baseline probability models with the support-gated one-guard soft screen selector at a 0.50 threshold.",
+        signature="strategy-support-gated-star-guard-screen-050-baseline-v1",
+        main_factory=_baseline_factory,
+        star_factory=_baseline_factory,
+        ticket_generator=generate_support_gated_star_guard_screen_050_tickets,
+    ),
+    "support_gated_star_guard_screen_060_baseline": StrategySpec(
+        name="support_gated_star_guard_screen_060_baseline",
+        description="Baseline probability models with the support-gated one-guard soft screen selector at a 0.60 threshold.",
+        signature="strategy-support-gated-star-guard-screen-060-baseline-v1",
+        main_factory=_baseline_factory,
+        star_factory=_baseline_factory,
+        ticket_generator=generate_support_gated_star_guard_screen_060_tickets,
+    ),
 }
 
 
