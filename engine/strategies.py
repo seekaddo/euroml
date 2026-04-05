@@ -134,6 +134,16 @@ def _hybrid_main_factory(random_state: int) -> FamilyBlendProbabilityModel:
     )
 
 
+def _hybrid_star_factory(random_state: int) -> FamilyBlendProbabilityModel:
+    return FamilyBlendProbabilityModel(
+        random_state=random_state,
+        factories=(
+            ("baseline", _baseline_factory),
+            ("star_focus", _star_focus_factory),
+        ),
+    )
+
+
 def _ticket_key(ticket: CandidateTicket) -> tuple[tuple[int, ...], tuple[int, ...]]:
     return ticket.main_numbers, ticket.star_numbers
 
@@ -559,6 +569,14 @@ STRATEGIES: dict[str, StrategySpec] = {
         signature="strategy-hybrid-main-star-focus-soft-guard-screen-v1",
         main_factory=_hybrid_main_factory,
         star_factory=_star_focus_factory,
+        ticket_generator=generate_star_guard1_soft_screen_tickets,
+    ),
+    "hybrid_main_hybrid_star_soft_guard_screen": StrategySpec(
+        name="hybrid_main_hybrid_star_soft_guard_screen",
+        description="Blend baseline and multi-history models for mains, blend baseline and star-focused models for stars, and use the one-guard soft screen selector.",
+        signature="strategy-hybrid-main-hybrid-star-soft-guard-screen-v1",
+        main_factory=_hybrid_main_factory,
+        star_factory=_hybrid_star_factory,
         ticket_generator=generate_star_guard1_soft_screen_tickets,
     ),
     "hybrid_main_star_focus_core_plus_guard": StrategySpec(
