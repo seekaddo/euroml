@@ -571,6 +571,14 @@ STRATEGIES: dict[str, StrategySpec] = {
         star_factory=_star_focus_factory,
         ticket_generator=generate_star_guard1_soft_screen_tickets,
     ),
+    "hybrid_main_baseline_star_soft_guard_screen": StrategySpec(
+        name="hybrid_main_baseline_star_soft_guard_screen",
+        description="Blend baseline and multi-history main models, keep baseline stars, and use the one-guard soft screen selector.",
+        signature="strategy-hybrid-main-baseline-star-soft-guard-screen-v1",
+        main_factory=_hybrid_main_factory,
+        star_factory=_baseline_factory,
+        ticket_generator=generate_star_guard1_soft_screen_tickets,
+    ),
     "hybrid_main_hybrid_star_soft_guard_screen": StrategySpec(
         name="hybrid_main_hybrid_star_soft_guard_screen",
         description="Blend baseline and multi-history models for mains, blend baseline and star-focused models for stars, and use the one-guard soft screen selector.",
