@@ -1110,6 +1110,18 @@ def generate_star_guard1_soft_screen_tickets(
     sample_count: int = 5000,
     random_state: int = 7,
 ) -> list[CandidateTicket]:
+    rerank_sample_count = _resolve_rerank_sample_count(sample_count, EXPERIMENTAL_RERANK_POOL)
+    global_scores = _build_global_candidate_scores(
+        main_probabilities=main_probabilities,
+        star_probabilities=star_probabilities,
+        spec=spec,
+        train_records=train_records,
+        sample_count=rerank_sample_count,
+        random_state=random_state,
+    )
+    if not global_scores:
+        return []
+
     guarded = _top_distinct_star_pair_candidates(global_scores, 1)
     reranked = _build_conditional_reranked_candidates_from_global_scores(
         global_scores=global_scores,
@@ -1181,18 +1193,15 @@ def _generate_support_gated_star_guard_screen_tickets(
             random_state=random_state,
         )
 
-    return _generate_star_guard_rerank_tickets(
+    guarded = _top_distinct_star_pair_candidates(global_scores, 1)
+    reranked = _build_conditional_reranked_candidates_from_global_scores(
+        global_scores=global_scores,
         main_probabilities=main_probabilities,
-        star_probabilities=star_probabilities,
         spec=spec,
         train_records=train_records,
-        top_k=top_k,
-        sample_count=sample_count,
-        random_state=random_state,
-        guard_count=1,
         rerank_weight=0.30,
-        rerank_pool_size=EXPERIMENTAL_RERANK_POOL,
     )
+    return _select_guarded_rerank_portfolio(guarded, reranked, top_k)
 
 
 def generate_support_gated_star_guard_screen_050_tickets(
