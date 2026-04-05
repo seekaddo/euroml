@@ -31,16 +31,31 @@ concurrency:
   group: euroml-research-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  SAMPLES: ${{ github.event.inputs.samples || '50' }}
+  RESEARCH_STRATEGIES: ${{ github.event.inputs.strategies || 'baseline star_guard1_soft_screen_multi_history support_gated_star_guard_screen_050_multi_history support_gated_star_guard_screen_060_multi_history support_gated_star_guard_screen_050_baseline support_gated_star_guard_screen_060_baseline' }}
+  PREDICTION_STRATEGY: ${{ github.event.inputs.prediction_strategy || 'baseline' }}
+  OUTPUT_DIR: research_outputs/latest
+  UV_CACHE_DIR: .uv-cache
+
 jobs:
-  research:
+  compare:
     runs-on: ubuntu-latest
-    timeout-minutes: 90
-    env:
-      SAMPLES: ${{ github.event.inputs.samples || '50' }}
-      RESEARCH_STRATEGIES: ${{ github.event.inputs.strategies || 'baseline star_guard1_soft_screen_multi_history support_gated_star_guard_screen_050_multi_history support_gated_star_guard_screen_060_multi_history support_gated_star_guard_screen_050_baseline support_gated_star_guard_screen_060_baseline' }}
-      PREDICTION_STRATEGY: ${{ github.event.inputs.prediction_strategy || 'baseline' }}
-      OUTPUT_DIR: research_outputs/latest
-      UV_CACHE_DIR: .uv-cache
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - label: "2025"
+            train_end: "2024-12-31"
+            test_start: "2025-01-01"
+            test_end: "2025-12-31"
+            output_file: "compare_2025.json"
+          - label: "2026"
+            train_end: "2025-12-31"
+            test_start: "2026-01-01"
+            test_end: "2026-12-31"
+            output_file: "compare_2026.json"
     steps:
       - name: Check out this repo
         uses: actions/checkout@v4
@@ -58,8 +73,119 @@ jobs:
       - name: Sync dependencies
         run: uv sync --frozen
 
-      - name: Run research cycle
-        run: bash scripts/research_cycle.sh
+      - name: Run compare for ${{ matrix.label }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/research_outputs"
+          read -r -a strategies <<< "$RESEARCH_STRATEGIES"
+          uv run python prediction_engine.py compare-strategies \
+            --train-end "${{ matrix.train_end }}" \
+            --test-start "${{ matrix.test_start }}" \
+            --test-end "${{ matrix.test_end }}" \
+            --mode frozen \
+            --samples "$SAMPLES" \
+            --strategies "${strategies[@]}" \
+            --output "$RUNNER_TEMP/research_outputs/${{ matrix.output_file }}"
+
+      - name: Upload compare output
+        uses: actions/upload-artifact@v4
+        with:
+          name: compare-${{ matrix.label }}
+          path: ${{ runner.temp }}/research_outputs/${{ matrix.output_file }}
+
+  predict:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out this repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Sync dependencies
+        run: uv sync --frozen
+
+      - name: Restore prior engine state
+        run: |
+          if [[ -f "$OUTPUT_DIR/engine_state.json" ]]; then
+            cp "$OUTPUT_DIR/engine_state.json" .engine.mem.json
+          fi
+
+      - name: Run next-draw prediction
+        run: |
+          mkdir -p "$RUNNER_TEMP/research_outputs"
+          uv run python prediction_engine.py predict-next \
+            --strategy "$PREDICTION_STRATEGY" \
+            --samples "$SAMPLES" \
+            --output "$RUNNER_TEMP/research_outputs/next_draw_prediction.json"
+          if [[ -f .engine.mem.json ]]; then
+            cp .engine.mem.json "$RUNNER_TEMP/research_outputs/engine_state.json"
+          fi
+
+      - name: Upload prediction output
+        uses: actions/upload-artifact@v4
+        with:
+          name: prediction
+          path: |
+            ${{ runner.temp }}/research_outputs/next_draw_prediction.json
+            ${{ runner.temp }}/research_outputs/engine_state.json
+
+  finalize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs:
+      - compare
+      - predict
+    steps:
+      - name: Check out this repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Download 2025 compare artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: compare-2025
+          path: ${{ runner.temp }}/compare-2025
+
+      - name: Download 2026 compare artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: compare-2026
+          path: ${{ runner.temp }}/compare-2026
+
+      - name: Download prediction artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: prediction
+          path: ${{ runner.temp }}/prediction
+
+      - name: Assemble research outputs
+        run: |
+          mkdir -p "$OUTPUT_DIR"
+          cp "$RUNNER_TEMP/compare-2025/compare_2025.json" "$OUTPUT_DIR/compare_2025.json"
+          cp "$RUNNER_TEMP/compare-2026/compare_2026.json" "$OUTPUT_DIR/compare_2026.json"
+          cp "$RUNNER_TEMP/prediction/next_draw_prediction.json" "$OUTPUT_DIR/next_draw_prediction.json"
+          if [[ -f "$RUNNER_TEMP/prediction/engine_state.json" ]]; then
+            cp "$RUNNER_TEMP/prediction/engine_state.json" "$OUTPUT_DIR/engine_state.json"
+          fi
+          read -r -a strategies <<< "$RESEARCH_STRATEGIES"
+          python3 scripts/build_research_summary.py \
+            --output-dir "$OUTPUT_DIR" \
+            --prediction-strategy "$PREDICTION_STRATEGY" \
+            --strategies "${strategies[@]}"
 
       - name: Upload research outputs
         uses: actions/upload-artifact@v4
