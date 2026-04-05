@@ -6,10 +6,8 @@
   "strategies": [
     "baseline",
     "star_guard1_soft_screen_multi_history",
-    "support_gated_star_guard_screen_050_multi_history",
-    "support_gated_star_guard_screen_060_multi_history",
-    "support_gated_star_guard_screen_050_baseline",
-    "support_gated_star_guard_screen_060_baseline"
+    "adaptive_soft_star_guard_screen_multi_history",
+    "adaptive_soft_star_guard_screen_baseline"
   ],
   "results": [
     {
@@ -39,53 +37,27 @@
       "release_pass": false
     },
     {
-      "strategy": "support_gated_star_guard_screen_050_multi_history",
+      "strategy": "adaptive_soft_star_guard_screen_multi_history",
       "mode": "frozen",
       "top1_w": 1.2019,
-      "best5_w": 2.7885,
-      "lift_best5": 0.25,
-      "useful_rate": 0.0385,
-      "2+2_rate": 0.0,
-      "3+1_count": 3,
-      "3+2_count": 1,
-      "4+2_count": 0,
-      "release_pass": false
-    },
-    {
-      "strategy": "support_gated_star_guard_screen_060_multi_history",
-      "mode": "frozen",
-      "top1_w": 1.2019,
-      "best5_w": 2.7885,
-      "lift_best5": 0.25,
-      "useful_rate": 0.0385,
-      "2+2_rate": 0.0,
-      "3+1_count": 3,
-      "3+2_count": 1,
-      "4+2_count": 0,
-      "release_pass": false
-    },
-    {
-      "strategy": "support_gated_star_guard_screen_050_baseline",
-      "mode": "frozen",
-      "top1_w": 1.4712,
-      "best5_w": 2.7788,
-      "lift_best5": 0.2404,
-      "useful_rate": 0.0096,
-      "2+2_rate": 0.0,
+      "best5_w": 2.8558,
+      "lift_best5": 0.3173,
+      "useful_rate": 0.0288,
+      "2+2_rate": 0.0192,
       "3+1_count": 1,
       "3+2_count": 0,
       "4+2_count": 0,
       "release_pass": false
     },
     {
-      "strategy": "support_gated_star_guard_screen_060_baseline",
+      "strategy": "adaptive_soft_star_guard_screen_baseline",
       "mode": "frozen",
-      "top1_w": 1.4712,
-      "best5_w": 2.7788,
-      "lift_best5": 0.2404,
-      "useful_rate": 0.0096,
+      "top1_w": 1.4808,
+      "best5_w": 2.8654,
+      "lift_best5": 0.3269,
+      "useful_rate": 0.0192,
       "2+2_rate": 0.0,
-      "3+1_count": 1,
+      "3+1_count": 2,
       "3+2_count": 0,
       "4+2_count": 0,
       "release_pass": false
@@ -315,49 +287,49 @@
         }
       ]
     },
-    "support_gated_star_guard_screen_050_multi_history": {
+    "adaptive_soft_star_guard_screen_multi_history": {
       "summary": {
-        "strategy": "support_gated_star_guard_screen_050_multi_history",
+        "strategy": "adaptive_soft_star_guard_screen_multi_history",
         "mode": "frozen",
         "top1_w": 1.2019,
-        "best5_w": 2.7885,
-        "lift_best5": 0.25,
-        "useful_rate": 0.0385,
-        "2+2_rate": 0.0,
-        "3+1_count": 3,
-        "3+2_count": 1,
+        "best5_w": 2.8558,
+        "lift_best5": 0.3173,
+        "useful_rate": 0.0288,
+        "2+2_rate": 0.0192,
+        "3+1_count": 1,
+        "3+2_count": 0,
         "4+2_count": 0,
         "release_pass": false
       },
       "best5_events": [
         {
-          "draw_date": "2025-01-17",
-          "rank": 4,
-          "hit": "3+1",
+          "draw_date": "2025-04-25",
+          "rank": 2,
+          "hit": "2+2",
           "prediction": {
             "main_numbers": [
-              2,
-              8,
-              19,
-              24,
-              35
+              23,
+              32,
+              39,
+              45,
+              48
             ],
             "star_numbers": [
-              5,
-              8
+              1,
+              12
             ]
           },
           "actual": {
             "main_numbers": [
-              8,
-              15,
-              24,
-              35,
-              42
+              13,
+              22,
+              32,
+              39,
+              41
             ],
             "star_numbers": [
-              6,
-              8
+              1,
+              12
             ]
           }
         },
@@ -393,64 +365,33 @@
           }
         },
         {
-          "draw_date": "2025-08-12",
-          "rank": 3,
-          "hit": "3+1",
+          "draw_date": "2025-10-07",
+          "rank": 5,
+          "hit": "2+2",
           "prediction": {
             "main_numbers": [
-              11,
-              13,
-              28,
-              42,
-              48
-            ],
-            "star_numbers": [
-              9,
-              11
-            ]
-          },
-          "actual": {
-            "main_numbers": [
-              18,
-              28,
-              42,
-              46,
-              48
-            ],
-            "star_numbers": [
-              3,
-              9
-            ]
-          }
-        },
-        {
-          "draw_date": "2025-10-17",
-          "rank": 4,
-          "hit": "3+2",
-          "prediction": {
-            "main_numbers": [
-              13,
-              20,
-              34,
-              44,
-              47
-            ],
-            "star_numbers": [
-              3,
-              5
-            ]
-          },
-          "actual": {
-            "main_numbers": [
-              13,
-              35,
+              4,
+              5,
               39,
-              44,
-              47
+              43,
+              46
             ],
             "star_numbers": [
-              3,
-              5
+              5,
+              8
+            ]
+          },
+          "actual": {
+            "main_numbers": [
+              24,
+              39,
+              42,
+              43,
+              48
+            ],
+            "star_numbers": [
+              5,
+              8
             ]
           }
         }
@@ -489,272 +430,80 @@
         }
       ]
     },
-    "support_gated_star_guard_screen_060_multi_history": {
+    "adaptive_soft_star_guard_screen_baseline": {
       "summary": {
-        "strategy": "support_gated_star_guard_screen_060_multi_history",
+        "strategy": "adaptive_soft_star_guard_screen_baseline",
         "mode": "frozen",
-        "top1_w": 1.2019,
-        "best5_w": 2.7885,
-        "lift_best5": 0.25,
-        "useful_rate": 0.0385,
+        "top1_w": 1.4808,
+        "best5_w": 2.8654,
+        "lift_best5": 0.3269,
+        "useful_rate": 0.0192,
         "2+2_rate": 0.0,
-        "3+1_count": 3,
-        "3+2_count": 1,
+        "3+1_count": 2,
+        "3+2_count": 0,
         "4+2_count": 0,
         "release_pass": false
       },
       "best5_events": [
         {
-          "draw_date": "2025-01-17",
-          "rank": 4,
-          "hit": "3+1",
-          "prediction": {
-            "main_numbers": [
-              2,
-              8,
-              19,
-              24,
-              35
-            ],
-            "star_numbers": [
-              5,
-              8
-            ]
-          },
-          "actual": {
-            "main_numbers": [
-              8,
-              15,
-              24,
-              35,
-              42
-            ],
-            "star_numbers": [
-              6,
-              8
-            ]
-          }
-        },
-        {
-          "draw_date": "2025-05-30",
-          "rank": 1,
-          "hit": "3+1",
-          "prediction": {
-            "main_numbers": [
-              4,
-              7,
-              20,
-              33,
-              40
-            ],
-            "star_numbers": [
-              1,
-              10
-            ]
-          },
-          "actual": {
-            "main_numbers": [
-              4,
-              7,
-              14,
-              33,
-              36
-            ],
-            "star_numbers": [
-              1,
-              5
-            ]
-          }
-        },
-        {
-          "draw_date": "2025-08-12",
+          "draw_date": "2025-07-01",
           "rank": 3,
           "hit": "3+1",
           "prediction": {
             "main_numbers": [
-              11,
-              13,
+              3,
+              17,
               28,
-              42,
-              48
+              32,
+              46
             ],
             "star_numbers": [
-              9,
-              11
+              3,
+              8
             ]
           },
           "actual": {
             "main_numbers": [
-              18,
+              1,
+              17,
               28,
-              42,
-              46,
-              48
+              32,
+              34
             ],
             "star_numbers": [
-              3,
-              9
+              7,
+              8
             ]
           }
         },
         {
-          "draw_date": "2025-10-17",
-          "rank": 4,
-          "hit": "3+2",
-          "prediction": {
-            "main_numbers": [
-              13,
-              20,
-              34,
-              44,
-              47
-            ],
-            "star_numbers": [
-              3,
-              5
-            ]
-          },
-          "actual": {
-            "main_numbers": [
-              13,
-              35,
-              39,
-              44,
-              47
-            ],
-            "star_numbers": [
-              3,
-              5
-            ]
-          }
-        }
-      ],
-      "top1_events": [
-        {
-          "draw_date": "2025-05-30",
-          "rank": 1,
-          "hit": "3+1",
-          "prediction": {
-            "main_numbers": [
-              4,
-              7,
-              20,
-              33,
-              40
-            ],
-            "star_numbers": [
-              1,
-              10
-            ]
-          },
-          "actual": {
-            "main_numbers": [
-              4,
-              7,
-              14,
-              33,
-              36
-            ],
-            "star_numbers": [
-              1,
-              5
-            ]
-          }
-        }
-      ]
-    },
-    "support_gated_star_guard_screen_050_baseline": {
-      "summary": {
-        "strategy": "support_gated_star_guard_screen_050_baseline",
-        "mode": "frozen",
-        "top1_w": 1.4712,
-        "best5_w": 2.7788,
-        "lift_best5": 0.2404,
-        "useful_rate": 0.0096,
-        "2+2_rate": 0.0,
-        "3+1_count": 1,
-        "3+2_count": 0,
-        "4+2_count": 0,
-        "release_pass": false
-      },
-      "best5_events": [
-        {
-          "draw_date": "2025-11-25",
+          "draw_date": "2025-10-03",
           "rank": 5,
           "hit": "3+1",
           "prediction": {
             "main_numbers": [
               6,
-              11,
-              29,
-              35,
-              37
+              12,
+              31,
+              41,
+              42
             ],
             "star_numbers": [
-              2,
-              7
+              1,
+              2
             ]
           },
           "actual": {
             "main_numbers": [
               6,
-              11,
-              17,
-              35,
-              44
-            ],
-            "star_numbers": [
-              3,
-              7
-            ]
-          }
-        }
-      ],
-      "top1_events": []
-    },
-    "support_gated_star_guard_screen_060_baseline": {
-      "summary": {
-        "strategy": "support_gated_star_guard_screen_060_baseline",
-        "mode": "frozen",
-        "top1_w": 1.4712,
-        "best5_w": 2.7788,
-        "lift_best5": 0.2404,
-        "useful_rate": 0.0096,
-        "2+2_rate": 0.0,
-        "3+1_count": 1,
-        "3+2_count": 0,
-        "4+2_count": 0,
-        "release_pass": false
-      },
-      "best5_events": [
-        {
-          "draw_date": "2025-11-25",
-          "rank": 5,
-          "hit": "3+1",
-          "prediction": {
-            "main_numbers": [
-              6,
-              11,
-              29,
-              35,
-              37
+              12,
+              18,
+              25,
+              41
             ],
             "star_numbers": [
               2,
-              7
-            ]
-          },
-          "actual": {
-            "main_numbers": [
-              6,
-              11,
-              17,
-              35,
-              44
-            ],
-            "star_numbers": [
-              3,
-              7
+              6
             ]
           }
         }
