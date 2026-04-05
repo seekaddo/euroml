@@ -29,6 +29,10 @@ SUPPORT_GATE_THRESHOLD_060 = 0.60
 ADAPTIVE_SUPPORT_THRESHOLD = 0.55
 ADAPTIVE_EXACT_SHARE_THRESHOLD = 0.24
 ADAPTIVE_SCORE_MARGIN_THRESHOLD = 0.10
+CORE_PLUS_GUARD_SUPPORT_THRESHOLD = 0.50
+CORE_PLUS_GUARD_EXACT_SHARE_THRESHOLD = 0.18
+CORE_PLUS_GUARD_SCORE_MARGIN_THRESHOLD = 0.06
+CORE_PLUS_GUARD_MAX_SCORE_DROP = 0.28
 
 
 @dataclass(frozen=True)
@@ -1282,6 +1286,88 @@ def generate_adaptive_soft_star_guard_screen_tickets(
         random_state=random_state,
         rerank_pool_size=EXPERIMENTAL_RERANK_POOL,
     )
+
+
+def generate_core_plus_guard_tickets(
+    main_probabilities: dict[int, float],
+    star_probabilities: dict[int, float],
+    spec: GameSpec,
+    train_records: list[DrawRecord],
+    top_k: int = 5,
+    sample_count: int = 5000,
+    random_state: int = 7,
+) -> list[CandidateTicket]:
+    rerank_sample_count = _resolve_rerank_sample_count(sample_count, EXPERIMENTAL_RERANK_POOL)
+    global_scores = _build_global_candidate_scores(
+        main_probabilities=main_probabilities,
+        star_probabilities=star_probabilities,
+        spec=spec,
+        train_records=train_records,
+        sample_count=rerank_sample_count,
+        random_state=random_state,
+    )
+    if not global_scores:
+        return []
+
+    ranked = sorted(global_scores.items(), key=lambda item: item[1], reverse=True)
+    baseline_portfolio = _select_ranked_candidates(ranked, top_k, _overlap_penalty)
+    if top_k <= 1 or len(baseline_portfolio) <= 1:
+        return baseline_portfolio
+
+    support, exact_share, score_margin = _guarded_star_metrics(
+        candidate_scores=global_scores,
+        spec=spec,
+        train_records=train_records,
+        base_main_probabilities=main_probabilities,
+    )
+    if (
+        support < CORE_PLUS_GUARD_SUPPORT_THRESHOLD
+        or exact_share < CORE_PLUS_GUARD_EXACT_SHARE_THRESHOLD
+        or score_margin < CORE_PLUS_GUARD_SCORE_MARGIN_THRESHOLD
+    ):
+        return baseline_portfolio
+
+    guarded_portfolio = _generate_soft_star_guard_rerank_tickets(
+        main_probabilities=main_probabilities,
+        star_probabilities=star_probabilities,
+        spec=spec,
+        train_records=train_records,
+        top_k=top_k,
+        sample_count=sample_count,
+        random_state=random_state,
+        rerank_pool_size=EXPERIMENTAL_RERANK_POOL,
+    )
+    if not guarded_portfolio:
+        return baseline_portfolio
+
+    baseline_core = baseline_portfolio[: max(1, top_k - 1)]
+    baseline_tail = baseline_portfolio[max(1, top_k - 1):]
+    fallback_tail = baseline_tail[0] if baseline_tail else baseline_portfolio[-1]
+
+    chosen_guard: CandidateTicket | None = None
+    chosen_guard_score = float("-inf")
+    core_star_pairs = {ticket.star_numbers for ticket in baseline_core}
+    for candidate in guarded_portfolio:
+        if any(
+            ticket.main_numbers == candidate.main_numbers and ticket.star_numbers == candidate.star_numbers
+            for ticket in baseline_core
+        ):
+            continue
+        novelty_bonus = 0.14 if candidate.star_numbers not in core_star_pairs else 0.0
+        overlap_penalty = max((_overlap_penalty(candidate, ticket) for ticket in baseline_core), default=0.0)
+        adjusted_score = candidate.score + novelty_bonus - 0.45 * overlap_penalty
+        if adjusted_score > chosen_guard_score:
+            chosen_guard = candidate
+            chosen_guard_score = adjusted_score
+
+    if chosen_guard is None:
+        return baseline_portfolio
+
+    if chosen_guard.score + 0.10 < fallback_tail.score - CORE_PLUS_GUARD_MAX_SCORE_DROP:
+        return baseline_portfolio
+
+    final_portfolio = baseline_core + [chosen_guard]
+    return final_portfolio[:top_k]
 
 
 def generate_support_gated_star_guard_screen_050_tickets(

@@ -9,6 +9,7 @@ from engine.tickets import (
     generate_candidate_tickets,
     generate_conditional_two_stage_tickets,
     generate_conditional_rerank_tickets,
+    generate_core_plus_guard_tickets,
     generate_hybrid_conditional_tickets,
     generate_adaptive_soft_star_guard_screen_tickets,
     generate_soft_star_guard_screen_tickets,
@@ -223,6 +224,22 @@ STRATEGIES: dict[str, StrategySpec] = {
         main_factory=_baseline_factory,
         star_factory=_baseline_factory,
         ticket_generator=generate_adaptive_soft_star_guard_screen_tickets,
+    ),
+    "core_plus_guard_multi_history": StrategySpec(
+        name="core_plus_guard_multi_history",
+        description="Keep a baseline-ranked core portfolio and allow one guarded specialist ticket when star-pair evidence is strong enough.",
+        signature="strategy-core-plus-guard-multi-history-v1",
+        main_factory=_multi_history_factory,
+        star_factory=_multi_history_factory,
+        ticket_generator=generate_core_plus_guard_tickets,
+    ),
+    "core_plus_guard_baseline": StrategySpec(
+        name="core_plus_guard_baseline",
+        description="Baseline probability models with a baseline-core plus one guarded specialist ticket.",
+        signature="strategy-core-plus-guard-baseline-v1",
+        main_factory=_baseline_factory,
+        star_factory=_baseline_factory,
+        ticket_generator=generate_core_plus_guard_tickets,
     ),
 }
 
