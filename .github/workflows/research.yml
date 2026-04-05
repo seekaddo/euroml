@@ -1,0 +1,83 @@
+name: Research Cycle
+
+on:
+  push:
+    paths-ignore:
+      - "research_outputs/**"
+  workflow_dispatch:
+    inputs:
+      samples:
+        description: "Monte Carlo sample count for the research cycle"
+        required: true
+        default: "50"
+      strategies:
+        description: "Space-separated strategy names to compare"
+        required: true
+        default: "baseline star_guard_rerank_multi_history star_guard1_soft_screen_multi_history soft_star_guard_screen_multi_history"
+      prediction_strategy:
+        description: "Strategy used for next-draw prediction"
+        required: true
+        default: "baseline"
+      commit_results:
+        description: "Commit refreshed research_outputs/latest back to the branch"
+        required: true
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+
+concurrency:
+  group: euroml-research-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  research:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      SAMPLES: ${{ github.event.inputs.samples || '50' }}
+      RESEARCH_STRATEGIES: ${{ github.event.inputs.strategies || 'baseline star_guard_rerank_multi_history star_guard1_soft_screen_multi_history soft_star_guard_screen_multi_history' }}
+      PREDICTION_STRATEGY: ${{ github.event.inputs.prediction_strategy || 'baseline' }}
+      OUTPUT_DIR: research_outputs/latest
+      UV_CACHE_DIR: .uv-cache
+    steps:
+      - name: Check out this repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Sync dependencies
+        run: uv sync --frozen
+
+      - name: Run research cycle
+        run: bash scripts/research_cycle.sh
+
+      - name: Upload research outputs
+        uses: actions/upload-artifact@v4
+        with:
+          name: research-cycle-${{ github.sha }}
+          path: research_outputs/latest
+
+      - name: Commit and push research outputs
+        if: ${{ github.event_name == 'push' || github.event.inputs.commit_results != 'false' }}
+        run: |
+          git config user.name "Automated"
+          git config user.email "actions@users.noreply.github.com"
+          git add research_outputs/latest
+          if git diff --cached --quiet; then
+            echo "No research output changes detected"
+            exit 0
+          fi
+          timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+          git commit -m "Research outputs: ${timestamp}"
+          git pull --rebase origin "${GITHUB_REF_NAME}"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
