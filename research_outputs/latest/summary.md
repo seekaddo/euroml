@@ -1,9 +1,9 @@
 # Research Cycle Summary
 
-- Generated: `2026-04-05T06:04:27Z`
+- Generated: `2026-04-05T06:18:07Z`
 - Samples: `50`
 - Prediction strategy: `baseline`
-- Strategies compared: `baseline, star_guard1_soft_screen_multi_history, star_focus_soft_guard_screen, star_focus_core_plus_guard`
+- Strategies compared: `baseline, star_guard1_soft_screen_multi_history, hybrid_main_star_focus_soft_guard_screen, hybrid_main_star_focus_core_plus_guard`
 
 ## Best 2025 Window Result
 
@@ -25,9 +25,9 @@
 
 ## Best 2026 Window Result
 
-- Strategy: `star_focus_soft_guard_screen`
-- `best5_w`: `2.9259`
-- `lift_best5`: `0.1481`
+- Strategy: `hybrid_main_star_focus_soft_guard_screen`
+- `best5_w`: `2.963`
+- `lift_best5`: `0.1852`
 - `useful_rate`: `0.037`
 - `2+2_rate`: `0.0`
 - `3+1_count`: `1`
@@ -36,7 +36,7 @@
 
 ### Best 2026 Useful Hits
 
-- `2026-01-23` `3+1`
+- `2026-01-02` `3+1`
 
 ## Next Prediction
 
