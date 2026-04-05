@@ -24,6 +24,7 @@ from engine.tickets import (
     generate_support_gated_star_guard_screen_050_tickets,
     generate_support_gated_star_guard_screen_060_tickets,
     generate_star_guard1_rerank_tickets,
+    generate_star_guard1_cross_screen_tickets,
     generate_star_guard1_soft_screen_tickets,
     generate_star_guard1_soft_rerank_tickets,
     generate_star_guard_rerank_tickets,
@@ -578,6 +579,14 @@ STRATEGIES: dict[str, StrategySpec] = {
         main_factory=_hybrid_main_factory,
         star_factory=_baseline_factory,
         ticket_generator=generate_star_guard1_soft_screen_tickets,
+    ),
+    "hybrid_main_star_focus_cross_guard_screen": StrategySpec(
+        name="hybrid_main_star_focus_cross_guard_screen",
+        description="Blend baseline and multi-history main models, keep the star specialist, and add a main-star cross bonus inside the one-guard soft screen selector.",
+        signature="strategy-hybrid-main-star-focus-cross-guard-screen-v1",
+        main_factory=_hybrid_main_factory,
+        star_factory=_star_focus_factory,
+        ticket_generator=generate_star_guard1_cross_screen_tickets,
     ),
     "hybrid_main_hybrid_star_soft_guard_screen": StrategySpec(
         name="hybrid_main_hybrid_star_soft_guard_screen",

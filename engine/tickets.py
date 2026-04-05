@@ -34,6 +34,7 @@ CORE_PLUS_GUARD_SUPPORT_THRESHOLD = 0.50
 CORE_PLUS_GUARD_EXACT_SHARE_THRESHOLD = 0.18
 CORE_PLUS_GUARD_SCORE_MARGIN_THRESHOLD = 0.06
 CORE_PLUS_GUARD_MAX_SCORE_DROP = 0.28
+MAIN_STAR_CROSS_BONUS_WEIGHT = 0.04
 
 
 @dataclass(frozen=True)
@@ -105,6 +106,37 @@ def build_pair_bonus(records: list[DrawRecord], component: str, pool_size: int) 
     return pair_bonus
 
 
+def build_main_star_bonus(records: list[DrawRecord], spec: GameSpec) -> np.ndarray:
+    compatible_records = [
+        record
+        for record in _filter_records_for_component(records, "star", spec.star_pool_size)
+        if record.spec.main_pool_size == spec.main_pool_size
+    ]
+    if not compatible_records:
+        compatible_records = records[-RECENT_PRIOR_DRAWS:] if len(records) > RECENT_PRIOR_DRAWS else records
+
+    total_draws = max(1, len(compatible_records))
+    main_counts = np.ones(spec.main_pool_size + 1, dtype=float)
+    star_counts = np.ones(spec.star_pool_size + 1, dtype=float)
+    cross_counts = np.ones((spec.main_pool_size + 1, spec.star_pool_size + 1), dtype=float)
+
+    for record in compatible_records:
+        for main_number in record.main_numbers:
+            main_counts[main_number] += 1.0
+            for star_number in record.star_numbers:
+                cross_counts[main_number, star_number] += 1.0
+        for star_number in record.star_numbers:
+            star_counts[star_number] += 1.0
+
+    cross_bonus = np.zeros_like(cross_counts)
+    for main_number in range(1, spec.main_pool_size + 1):
+        for star_number in range(1, spec.star_pool_size + 1):
+            empirical_cross_rate = cross_counts[main_number, star_number] / total_draws
+            empirical_independence = (main_counts[main_number] / total_draws) * (star_counts[star_number] / total_draws)
+            cross_bonus[main_number, star_number] = float(np.log(empirical_cross_rate / empirical_independence))
+    return cross_bonus
+
+
 def build_shape_priors(records: list[DrawRecord], spec: GameSpec) -> ShapePriors:
     recent_records = records[-RECENT_PRIOR_DRAWS:] if len(records) > RECENT_PRIOR_DRAWS else records
     compatible_star_records = [record for record in recent_records if record.spec.star_pool_size == spec.star_pool_size]
@@ -169,12 +201,19 @@ def _ticket_score(
     main_pair_bonus: np.ndarray,
     star_pair_bonus: np.ndarray,
     shape_priors: ShapePriors,
+    main_star_bonus: np.ndarray | None = None,
 ) -> float:
     score = 0.0
     score += sum(np.log(main_probabilities[number]) for number in main_numbers)
     score += sum(np.log(star_probabilities[number]) for number in star_numbers)
     score += 0.15 * sum(main_pair_bonus[left, right] for left, right in combinations(main_numbers, 2))
     score += 0.10 * sum(star_pair_bonus[left, right] for left, right in combinations(star_numbers, 2))
+    if main_star_bonus is not None:
+        score += MAIN_STAR_CROSS_BONUS_WEIGHT * sum(
+            main_star_bonus[main_number, star_number]
+            for main_number in main_numbers
+            for star_number in star_numbers
+        )
     score += shape_priors.score(main_numbers, star_numbers)
     return float(score)
 
@@ -206,6 +245,7 @@ def _deterministic_candidates(
     main_pair_bonus: np.ndarray,
     star_pair_bonus: np.ndarray,
     shape_priors: ShapePriors,
+    main_star_bonus: np.ndarray | None = None,
 ) -> dict[tuple[tuple[int, ...], tuple[int, ...]], float]:
     main_pool = _top_probability_values(main_probabilities, DETERMINISTIC_MAIN_POOL)
     star_pool = _top_probability_values(star_probabilities, min(DETERMINISTIC_STAR_POOL, spec.star_pool_size))
@@ -226,6 +266,7 @@ def _deterministic_candidates(
                 main_pair_bonus,
                 star_pair_bonus,
                 shape_priors,
+                main_star_bonus=main_star_bonus,
             )
             unique_candidates[(main_numbers, star_numbers)] = score
     return unique_candidates
@@ -238,6 +279,7 @@ def _build_global_candidate_scores(
     train_records: list[DrawRecord],
     sample_count: int,
     random_state: int,
+    main_star_bonus: np.ndarray | None = None,
 ) -> dict[tuple[tuple[int, ...], tuple[int, ...]], float]:
     rng = np.random.default_rng(random_state)
     main_pair_bonus = build_pair_bonus(train_records, "main", spec.main_pool_size)
@@ -256,6 +298,7 @@ def _build_global_candidate_scores(
         main_pair_bonus=main_pair_bonus,
         star_pair_bonus=star_pair_bonus,
         shape_priors=shape_priors,
+        main_star_bonus=main_star_bonus,
     )
 
     for _ in range(sample_count):
@@ -269,6 +312,7 @@ def _build_global_candidate_scores(
             main_pair_bonus,
             star_pair_bonus,
             shape_priors,
+            main_star_bonus=main_star_bonus,
         )
         key = (main_numbers, star_numbers)
         if key not in unique_candidates or score > unique_candidates[key]:
@@ -1187,6 +1231,40 @@ def generate_star_guard1_soft_screen_tickets(
         train_records=train_records,
         sample_count=rerank_sample_count,
         random_state=random_state,
+    )
+    if not global_scores:
+        return []
+
+    guarded = _top_distinct_star_pair_candidates(global_scores, 1)
+    reranked = _build_conditional_reranked_candidates_from_global_scores(
+        global_scores=global_scores,
+        main_probabilities=main_probabilities,
+        spec=spec,
+        train_records=train_records,
+        rerank_weight=0.30,
+    )
+    return _select_guarded_rerank_portfolio(guarded, reranked, top_k)
+
+
+def generate_star_guard1_cross_screen_tickets(
+    main_probabilities: dict[int, float],
+    star_probabilities: dict[int, float],
+    spec: GameSpec,
+    train_records: list[DrawRecord],
+    top_k: int = 5,
+    sample_count: int = 5000,
+    random_state: int = 7,
+) -> list[CandidateTicket]:
+    rerank_sample_count = _resolve_rerank_sample_count(sample_count, EXPERIMENTAL_RERANK_POOL)
+    main_star_bonus = build_main_star_bonus(train_records, spec)
+    global_scores = _build_global_candidate_scores(
+        main_probabilities=main_probabilities,
+        star_probabilities=star_probabilities,
+        spec=spec,
+        train_records=train_records,
+        sample_count=rerank_sample_count,
+        random_state=random_state,
+        main_star_bonus=main_star_bonus,
     )
     if not global_scores:
         return []
