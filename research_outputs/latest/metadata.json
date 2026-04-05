@@ -1,0 +1,34 @@
+{
+  "generated_at_utc": "2026-04-05T04:25:02Z",
+  "strategies": [
+    "baseline",
+    "star_guard_rerank_multi_history",
+    "star_guard1_soft_screen_multi_history",
+    "soft_star_guard_screen_multi_history"
+  ],
+  "samples": null,
+  "prediction_strategy": "baseline",
+  "next_draw_date": null,
+  "best_2025": {
+    "strategy": "star_guard1_soft_screen_multi_history",
+    "mode": "frozen",
+    "top1_w": 1.2019,
+    "best5_w": 2.7885,
+    "lift_best5": 0.25,
+    "2+2_rate": 0.0,
+    "3+2_count": 1,
+    "4+2_count": 0,
+    "release_pass": false
+  },
+  "best_2026": {
+    "strategy": "baseline",
+    "mode": "frozen",
+    "top1_w": 1,
+    "best5_w": 3,
+    "lift_best5": 0.2222,
+    "2+2_rate": 0.037,
+    "3+2_count": 0,
+    "4+2_count": 0,
+    "release_pass": false
+  }
+}

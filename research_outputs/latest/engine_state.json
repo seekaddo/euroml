@@ -1,0 +1,189 @@
+{
+  "last_prediction_dataset_fingerprint": "aa485569312bcbe300635ef0667e9de66ff374ea505ec340a39f7b42493b8cdf",
+  "engine_signature": "strategy-baseline-v1:v2_weekday_regime:v2_overlap_penalty",
+  "last_prediction": {
+    "train_end": "2026-04-03",
+    "next_draw_date": "2026-04-07",
+    "model_diagnostics": {
+      "main": {
+        "training_rows": 96700,
+        "validation_rows": 5200,
+        "validation_draw_count": 104,
+        "prior_brier": 0.09,
+        "linear_brier": 0.09003938802556022,
+        "tree_brier": 0.09001098466173013,
+        "blend_brier": 0.09001081982495217,
+        "weights": {
+          "prior": 0.33339551050489497,
+          "linear": 0.3332496655455123,
+          "tree": 0.3333548239495928
+        }
+      },
+      "star": {
+        "training_rows": 21512,
+        "validation_rows": 1248,
+        "validation_draw_count": 104,
+        "prior_brier": 0.1390834691767316,
+        "linear_brier": 0.13888517812687404,
+        "tree_brier": 0.13898840539560858,
+        "blend_brier": 0.13889402435615766,
+        "weights": {
+          "prior": 0.3330988647258168,
+          "linear": 0.33357444120189333,
+          "tree": 0.3333266940722899
+        }
+      }
+    },
+    "top_main_probabilities": [
+      {
+        "number": 25,
+        "probability": 0.102823
+      },
+      {
+        "number": 23,
+        "probability": 0.102689
+      },
+      {
+        "number": 19,
+        "probability": 0.102683
+      },
+      {
+        "number": 7,
+        "probability": 0.102298
+      },
+      {
+        "number": 50,
+        "probability": 0.102171
+      },
+      {
+        "number": 8,
+        "probability": 0.102118
+      },
+      {
+        "number": 42,
+        "probability": 0.101803
+      },
+      {
+        "number": 21,
+        "probability": 0.101598
+      },
+      {
+        "number": 45,
+        "probability": 0.101552
+      },
+      {
+        "number": 37,
+        "probability": 0.101478
+      }
+    ],
+    "top_star_probabilities": [
+      {
+        "number": 2,
+        "probability": 0.196
+      },
+      {
+        "number": 3,
+        "probability": 0.178922
+      },
+      {
+        "number": 9,
+        "probability": 0.17584
+      },
+      {
+        "number": 6,
+        "probability": 0.174365
+      },
+      {
+        "number": 10,
+        "probability": 0.173868
+      },
+      {
+        "number": 12,
+        "probability": 0.173811
+      }
+    ],
+    "predictions": [
+      {
+        "rank": 1,
+        "main_numbers": [
+          10,
+          21,
+          30,
+          42,
+          45
+        ],
+        "star_numbers": [
+          2,
+          10
+        ],
+        "score": -15.656688,
+        "confidence": 10
+      },
+      {
+        "rank": 2,
+        "main_numbers": [
+          14,
+          23,
+          26,
+          48,
+          50
+        ],
+        "star_numbers": [
+          7,
+          11
+        ],
+        "score": -16.695769,
+        "confidence": 6
+      },
+      {
+        "rank": 3,
+        "main_numbers": [
+          12,
+          22,
+          27,
+          41,
+          48
+        ],
+        "star_numbers": [
+          8,
+          9
+        ],
+        "score": -16.773983,
+        "confidence": 8
+      },
+      {
+        "rank": 4,
+        "main_numbers": [
+          19,
+          24,
+          25,
+          30,
+          50
+        ],
+        "star_numbers": [
+          3,
+          12
+        ],
+        "score": -16.793902,
+        "confidence": 8
+      },
+      {
+        "rank": 5,
+        "main_numbers": [
+          7,
+          19,
+          21,
+          30,
+          37
+        ],
+        "star_numbers": [
+          6,
+          9
+        ],
+        "score": -16.828342,
+        "confidence": 8
+      }
+    ]
+  },
+  "updated_at_utc": "2026-04-05T04:25:02.141194+00:00"
+}
